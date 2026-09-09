@@ -1,0 +1,144 @@
+<!-- PROTOTYPE — throwaway. Answers: "does the deal→pick→grade drill loop feel right?"
+     Chart: S17, 4-8 deck, DAS, late surrender (research/blackjack-trainer-research.md §1a).
+     No build step. Open in a browser. Delete or absorb once the loop is validated. -->
+<meta charset="utf-8">
+<title>PROTOTYPE — Basic Strategy Drill</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 620px; margin: 40px auto; padding: 0 16px; color: #eee; background: #1a2e22; }
+  .banner { background: #402; color: #fca; font-size: 13px; padding: 6px 10px; border-radius: 6px; margin-bottom: 20px; }
+  .hand { font-size: 28px; margin: 24px 0 8px; }
+  .card { display: inline-block; background: #fff; color: #111; border-radius: 6px; padding: 4px 12px; margin-right: 6px; font-weight: 700; min-width: 20px; text-align: center; }
+  .dealer .card { background: #ccc; }
+  .label { font-size: 13px; opacity: .7; text-transform: uppercase; letter-spacing: .05em; }
+  .actions { margin: 28px 0; }
+  button { font: inherit; font-weight: 600; padding: 10px 16px; margin: 0 8px 8px 0; border: 0; border-radius: 8px; background: #2d5a3d; color: #fff; cursor: pointer; }
+  button:hover { background: #3a7050; }
+  .feedback { min-height: 60px; font-size: 18px; margin: 16px 0; }
+  .ok { color: #7fdca0; }
+  .bad { color: #ff9b8a; }
+  .stats { font-size: 14px; opacity: .8; border-top: 1px solid #3a5; padding-top: 12px; margin-top: 24px; }
+  kbd { background: #333; border-radius: 4px; padding: 1px 6px; font-size: 13px; }
+</style>
+
+<div class="banner">⚠ PROTOTYPE — throwaway drill loop, not the real app</div>
+<h2>Basic Strategy Drill</h2>
+<p class="label">Rules: 4–8 deck · dealer stands soft 17 · double after split · late surrender</p>
+
+<div class="dealer">
+  <div class="label">Dealer shows</div>
+  <div class="hand" id="dealer"></div>
+</div>
+<div>
+  <div class="label">Your hand</div>
+  <div class="hand" id="player"></div>
+</div>
+
+<div class="actions" id="actions">
+  <button data-a="H">Hit <kbd>H</kbd></button>
+  <button data-a="S">Stand <kbd>S</kbd></button>
+  <button data-a="D">Double <kbd>D</kbd></button>
+  <button data-a="P">Split <kbd>P</kbd></button>
+  <button data-a="R">Surrender <kbd>R</kbd></button>
+</div>
+
+<div class="feedback" id="feedback">Pick the correct basic-strategy action.</div>
+<div class="stats" id="stats"></div>
+
+<script>
+// ---- Strategy engine: pure data + lookup. Lift this into the real app later. ----
+// Columns are dealer upcard 2,3,4,5,6,7,8,9,10,A -> index 0..9.
+// Actions: H hit, S stand, D double-else-hit, Ds double-else-stand, P split, Rh surrender-else-hit.
+const HARD = { // player hard total -> row
+  8:'HHHHHHHHHH', 9:'HDDDDHHHHH', 10:'DDDDDDDDHH', 11:'DDDDDDDDDH',
+  12:'HHSSSHHHHH', 13:'SSSSSHHHHH', 14:'SSSSSHHHHH', 15:'SSSSSHHHRhH'.match(/Rh|[HSDP]/g),
+  16:'SSSSSHHRhRhRh'.match(/Rh|[HSDP]/g), 17:'SSSSSSSSSS', 18:'SSSSSSSSSS',
+  19:'SSSSSSSSSS', 20:'SSSSSSSSSS', 21:'SSSSSSSSSS' };
+const SOFT = { // "soft total" = the non-ace total. A,2 => 2, ... A,9 => 9
+  2:'HHHDDHHHHH', 3:'HHHDDHHHHH', 4:'HHDDDHHHHH', 5:'HHDDDHHHHH',
+  6:'HDDDDHHHHH', 7:['Ds','Ds','Ds','Ds','Ds','S','S','H','H','H'],
+  8:'SSSSSSSSSS', 9:'SSSSSSSSSS' };
+const PAIR = { // pair rank (2..10, 11=Aces) DAS assumed
+  2:'PPPPPPHHHH', 3:'PPPPPPHHHH', 4:'HHHPPHHHHH', 5:'DDDDDDDDHH',
+  6:'PPPPPHHHHH', 7:'PPPPPPHHHH', 8:'PPPPPPPPPP', 9:'PPPPPSPPSS',
+  10:'SSSSSSSSSS', 11:'PPPPPPPPPP' };
+
+function col(up){ return up===11 ? 9 : up-2; } // Ace=11 -> last column
+function cell(row, i){ return Array.isArray(row) ? row[i] : row[i]; }
+
+function getCorrectAction(cards, up){
+  const i = col(up);
+  const ranks = cards.map(c=>c.r);
+  // pair?
+  if(cards.length===2 && ranks[0]===ranks[1]){
+    const a = cell(PAIR[ranks[0]], i);
+    if(a) return a;
+  }
+  // soft? (contains an ace counted as 11 without busting)
+  const aces = ranks.filter(r=>r===11).length;
+  let total = ranks.reduce((s,r)=>s+r,0);
+  let soft = aces>0 && total<=21;
+  if(soft){
+    const nonAce = total - 11; // A + rest, with one ace as 11
+    if(nonAce>=2 && nonAce<=9) { const a = cell(SOFT[nonAce], i); if(a) return a; }
+    // soft 20/21 or unusual -> fall through to hard-total stand logic
+  }
+  // hard total (reduce aces to 1 as needed)
+  let t = total; let a2 = aces;
+  while(t>21 && a2>0){ t-=10; a2--; }
+  const key = Math.min(21, Math.max(8, t));
+  return cell(HARD[key], i);
+}
+
+// map engine action codes to the 5 buttons (double-else-* both = "D", surrender = "R")
+function normalize(a){ return a==='Ds' ? 'D' : a==='Rh' ? 'R' : a; }
+
+// ---- Deal simulator (toy: independent cards, good enough to feel the loop) ----
+const RANKS = [2,3,4,5,6,7,8,9,10,10,10,10,11]; // 10,J,Q,K all =10; A=11
+const NAME = r => r===11?'A':r===10?['10','J','Q','K'][Math.floor(Math.random()*4)]:''+r;
+const draw = () => { const r = RANKS[Math.floor(Math.random()*RANKS.length)]; return {r, n:NAME(r)}; };
+
+let hand, up, stats = {n:0, ok:0};
+
+function deal(){
+  hand = [draw(), draw()];
+  up = draw().r;
+  render();
+  document.getElementById('feedback').textContent = 'Pick the correct basic-strategy action.';
+  document.getElementById('feedback').className = 'feedback';
+}
+function render(){
+  document.getElementById('dealer').innerHTML = `<span class="card">${NAME(up)}</span><span class="card">?</span>`;
+  document.getElementById('player').innerHTML = hand.map(c=>`<span class="card">${c.n}</span>`).join('');
+}
+function answer(picked){
+  const correct = normalize(getCorrectAction(hand, up));
+  stats.n++;
+  const right = picked===correct;
+  if(right) stats.ok++;
+  const fb = document.getElementById('feedback');
+  const names = {H:'Hit', S:'Stand', D:'Double', P:'Split', R:'Surrender'};
+  fb.className = 'feedback ' + (right?'ok':'bad');
+  fb.textContent = right ? `✓ Correct — ${names[correct]}` : `✗ You picked ${names[picked]}. Correct: ${names[correct]}`;
+  document.getElementById('stats').textContent = `${stats.ok}/${stats.n} correct (${Math.round(100*stats.ok/stats.n)}%)`;
+  setTimeout(deal, right ? 700 : 1600);
+}
+
+document.getElementById('actions').addEventListener('click', e => {
+  const a = e.target.closest('button')?.dataset.a; if(a) answer(a);
+});
+addEventListener('keydown', e => {
+  const a = {h:'H',s:'S',d:'D',p:'P',r:'R'}[e.key.toLowerCase()]; if(a) answer(a);
+});
+deal();
+
+// ---- ponytail self-check: engine spot-values vs the chart (open console) ----
+console.assert(normalize(getCorrectAction([{r:10},{r:6}],10))==='R',  '16v10 -> surrender');
+console.assert(normalize(getCorrectAction([{r:8},{r:8}],11))==='P',   '8,8 vs A -> P (S17)');
+console.assert(normalize(getCorrectAction([{r:11},{r:7}],3))==='D',   'A,7 vs 3 -> Ds/D');
+console.assert(normalize(getCorrectAction([{r:11},{r:7}],9))==='H',   'A,7 vs 9 -> H');
+console.assert(normalize(getCorrectAction([{r:5},{r:6}],10))==='D',   '11 vs 10 -> D');
+console.assert(normalize(getCorrectAction([{r:5},{r:6}],11))==='H',   '11 vs A -> H (S17)');
+console.assert(normalize(getCorrectAction([{r:10},{r:5}],10))==='R',  '15 vs 10 -> surrender');
+console.assert(normalize(getCorrectAction([{r:9},{r:9}],7))==='S',    '9,9 vs 7 -> S');
+console.log('self-check done');
+</script>
