@@ -5,6 +5,7 @@
   import { createTable } from '../engine/round.js';
   import HandView from './HandView.svelte';
   import ChipStack from './ChipStack.svelte';
+  import Review from './Review.svelte';
 
   const t = createTable({ shoe: createShoe({ seed: Date.now() }), bankroll: 1000 });
   const ACTIONS = { H: 'Hit', S: 'Stand', D: 'Double', P: 'Split', R: 'Surrender' };
@@ -25,8 +26,16 @@
   const act = (fn) => { fn(); sync(); };
   const deal = (bet) => { lastBet = bet; act(() => t.deal(bet)); };
   const move = (code) => act(() => ({ H: t.hit, S: t.stand, D: t.double, P: t.split, R: t.surrender })[code]());
+  const canRebet = $derived(phase === 'done' && lastBet > 0 && lastBet <= bankroll);
+  // Enter deals the next hand (but not when a button is focused — that's its own click).
+  const onkey = (e) => {
+    if (e.key === 'Enter' && canRebet && e.target.tagName !== 'BUTTON') deal(lastBet);
+  };
 </script>
 
+<svelte:window onkeydown={onkey} />
+
+<div class="layout">
 <div class="felt">
   <header><span>Bankroll <b>${bankroll}</b></span></header>
 
@@ -55,6 +64,9 @@
       <p class="result" class:win={round.net > 0} class:lose={round.net < 0}>
         {round.net > 0 ? `Won $${round.net}` : round.net < 0 ? `Lost $${-round.net}` : 'Push'}
       </p>
+      {#if canRebet}
+        <button class="next" onclick={() => deal(lastBet)}>Next hand (Enter) — ${lastBet}</button>
+      {/if}
       <ChipStack {bankroll} {lastBet} onDeal={deal} />
     {:else}
       <ChipStack {bankroll} {lastBet} onDeal={deal} />
@@ -62,10 +74,26 @@
   </footer>
 </div>
 
+{#if phase === 'done' && round?.decisions.length}
+  <Review decisions={round.decisions} />
+{/if}
+</div>
+
 <style>
-  .felt {
-    max-width: 720px;
+  /* Felt + review side by side on desktop; review wraps below the felt on narrow screens. */
+  .layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+    justify-content: center;
+    max-width: 1120px;
     margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+  .felt {
+    flex: 1 1 560px;
+    max-width: 720px;
     padding: 1.5rem;
     min-height: 60vh;
     display: flex;
@@ -89,4 +117,8 @@
   .result { font-size: 1.3rem; font-weight: 700; color: var(--push); margin: 0; }
   .result.win { color: var(--win); }
   .result.lose { color: var(--lose); }
+  .next {
+    padding: 0.6rem 1.2rem; border: none; border-radius: 0.4rem;
+    background: var(--btn); color: #fff; font-weight: 700; cursor: pointer;
+  }
 </style>

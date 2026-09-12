@@ -3,6 +3,11 @@
 // Grading oracle is NOT surfaced here (#3 scope) — decisions are captured raw for #4 to grade.
 import { value, isPair } from './hand.js';
 import { createShoe } from './shoe.js';
+import { getCorrectAction, forGrading } from './strategy.js';
+
+// Else-actions when the chart move isn't legal for the current hand (grading-legality-handoff):
+// a 3-card 11 can't double (D->H), a post-hit soft 18 can't double (Ds->S), a 3-card 16 can't surrender (Rh->H).
+const ELSE = { D: 'H', Ds: 'S', Rh: 'H' };
 
 // v1 fixed ruleset (SPEC §1). blackjackPays 3:2 and maxHands 4 are standard;
 // ponytail: no payout/resplit rule is written in SPEC/research, these are the conventional defaults.
@@ -52,13 +57,21 @@ export function createTable({ shoe, bankroll = 1000, rules = {} } = {}) {
 
   const activeHand = () => round.hands[round.active];
 
-  // Record the decision BEFORE mutating (snapshot the hand — the live array keeps growing).
+  // Record + grade the decision BEFORE mutating (snapshot the hand — the live array keeps growing).
+  // Grading reconciles against table.legalMoves() (round-state aware: split/bankroll gates the
+  // snapshot alone can't see); an illegal chart move falls to its else-action. correctAction keeps
+  // the raw Ds/Rh code for #4's reason text; `correct` compares the collapsed button to the player.
   function record(chosen) {
     const h = activeHand();
+    const raw = getCorrectAction(h.cards, round.dealer[0], rules);
+    // ponytail: P-illegal (resplit cap / broke) has no chart else-action — leave it P; never arises in play.
+    const correctAction = table.legalMoves().includes(forGrading(raw)) ? raw : ELSE[raw] ?? raw;
     round.decisions.push({
       hand: [...h.cards],
       upcard: round.dealer[0],
       chosen,
+      correctAction,
+      correct: chosen === forGrading(correctAction),
       trueCount: shoe.trueCount,
     });
   }

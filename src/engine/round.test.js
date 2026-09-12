@@ -113,6 +113,37 @@ test('split aces: one card each, hands close; a resulting 21 pays 1:1 not 3:2', 
   assert.equal(t.round.net, 200, 'two 1:1 wins (100 each); a split 21 is NOT a 3:2 natural');
 });
 
+test('grading: a 3-card 11 is not "should have doubled" — D collapses to H when illegal', () => {
+  const t = table([2, 6, 3, 10, 6, 10]); // player 2,3=5 vs 6; hit a 6 -> 11 (3 cards)
+  t.deal(100);
+  t.hit(); // 2,3=5 -> hit (chart H, correct)
+  t.stand(); // now 2,3,6=11: chart says D, but 3 cards can't double -> correctAction H
+  const d = t.round.decisions[1];
+  assert.deepEqual(d.hand.map((c) => c.rank), [2, 3, 6]);
+  assert.equal(d.correctAction, 'H', '3-card 11 reconciles D -> H');
+  assert.equal(d.correct, false, 'standing on 11 is wrong');
+});
+
+test('grading: surrender gated off a split hand — Rh collapses to H (and H is then correct)', () => {
+  const t = table([6, 10, 6, 7, 10, 9, 5]); // 6,6 vs 10; split -> hand0 6,10=16, hand1 6,9=15; dealer 10,7=17
+  t.deal(100);
+  t.split();
+  t.hit(); // hand0 6,10=16 vs 10: chart Rh, but split hand can't surrender -> correctAction H
+  const d = t.round.decisions.find((x) => x.hand.length === 2 && x.hand[0].rank === 6 && x.hand[1].rank === 10);
+  assert.equal(d.correctAction, 'H', 'split-hand 16 reconciles Rh -> H');
+  assert.equal(d.correct, true, 'hitting is the legal-reconciled correct move');
+});
+
+test('grading: a legal Ds is preserved raw and graded as its button', () => {
+  const t = table(['A', 4, 7, 10, 5, 10]); // A,7=soft 18 vs 4: chart Ds; doubling is legal on 2 cards
+  t.deal(100);
+  t.double();
+  const d = t.round.decisions[0];
+  assert.equal(d.correctAction, 'Ds', 'raw Ds kept for reason text');
+  assert.equal(d.chosen, 'D');
+  assert.equal(d.correct, true, 'Ds grades the player-pressed D as correct');
+});
+
 test('surrender: lose half the bet, dealer does not draw', () => {
   const t = table([10, 9, 6, 9]); // player 16 vs 9
   t.deal(100);
