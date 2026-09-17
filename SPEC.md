@@ -140,6 +140,34 @@ Single JSON blob in `localStorage`: SRS buckets, per-cell stats, bankroll, setti
 
 ---
 
+
 ## 10. First deliverable
 
 Scaffold Vite + Svelte; port the prototype's `getCorrectAction` + chart tables into `engine/`; ship **Mode 1 (strategy play-table)** end to end — full rounds, bankroll, end-of-round review with heuristics, Leitner + heatmap wired. Everything else layers on that.
+
+---
+
+## 11. Front end
+
+Referenced throughout the issue tracker as "SPEC §11"; written down here once #10 built it.
+Character: a **study tool** first — dashboard clarity, review/heatmap/progress first-class — with
+production polish and satisfying motion. Real felt and cards for immersion, *not* a casino sim
+(no chip-drag physics, no other players).
+
+| # | Area | Decision |
+|---|---|---|
+| F1 | Responsive | One codebase, desktop-primary. Rich modes assume desktop width; the high-frequency drills stay thumb-usable on a phone. |
+| F2 | Styling | Svelte scoped `<style>` per component + CSS custom-property design tokens in one global sheet (`src/app.css`). No UI library, no Tailwind, no new deps. Components reference tokens, never literals, so the skin can be re-themed from that one file. |
+| F3 | App shell / nav | Single page, hash routing (`src/routes/router.js`). Landing is the dashboard hub: progress snapshot (heatmap thumbnail, bucket counts, bankroll, counting streak) plus one prominent `Continue →` CTA. A persistent switcher lists every mode; the free menu is never locked. |
+| F4 | Cards | Stylised suited cards drawn in a component, themed from tokens, no image assets. Suit is cosmetic — it is irrelevant to strategy, so the engine's cards carry none. |
+| F5 | Motion | Choreographed but fast: cards deal in from the shoe position with a per-card stagger, the hole card flips, the dealer's play-out lands one card at a time — all inside 150–250ms. **Any input skips straight to the resolved state.** `MotionPref` = Full / Reduced / Off, and the OS `prefers-reduced-motion` can only ever remove motion. Numbers live in `src/lib/motion.js`; the transitions are Svelte's own. |
+| F6 | Review | Inline panel beside the felt (desktop) / below it (mobile) after settle, with the played hand still visible. One row per decision: ✓/✗, the correct action, the heuristic why, and — for a miss — the chart cell behind it, clickable straight into a drill. Announced via an ARIA live region. |
+| F7 | Heatmap | Interactive: compact thumbnail on the dashboard, full view under Progress. Cells coloured by accuracy, hover reveals attempts / % / Leitner bucket, and clicking a cell drills that exact situation. |
+| F8 | Reference view | The strategy grid is ONE component with a toggle: **Correct actions** (the canonical colour-coded chart) ↔ **My accuracy** (the heatmap). |
+| F9 | Bet UI | Denomination chips ($1/$5/$25/$100) build the bet, with Rebet / Clear / Deal, defaulting to the last bet so flat-bet drilling is repeated Deal. |
+| F10 | Audio | A card-deal tick, a chip click and the two grade cues, behind a settings toggle, **default off**. Synthesised with the built-in WebAudio API rather than shipped as clips — the same ticket forbids new deps and the repo ships no binary assets. No ambience suite in v1. |
+| — | State | Svelte-native reactive state in `src/lib/session.svelte.js`, hydrated from and persisted to the `srs/store.js` blob. No external state library. |
+| — | Accessibility | Not negotiable-down: keyboard-operable everywhere (H/S/D/P/R at the table, and every drill), visible focus rings, ARIA live regions for feedback, reduced motion honoured, a skip link. |
+
+`engine/` and `srs/` stay Svelte-free (§3 rule) — the front end is a consumer of them, never the
+other way round.

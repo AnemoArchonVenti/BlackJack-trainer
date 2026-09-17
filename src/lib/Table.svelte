@@ -1,6 +1,10 @@
 <script>
-  // Mode 1: single-spot strategy play-table (SPEC §5.1). Wires the pure round engine to the
-  // UI. No grading recap yet (#4) and no count display yet (#8) — just play full rounds.
+  // Mode 1: single-spot strategy play-table (SPEC §5.1). Wires the pure round engine to the UI:
+  // play a full round, get the graded recap (#4), feed the SRS (#5).
+  //
+  // Motion (#10 F5): cards deal in staggered from the shoe, the hole card flips at settle, and
+  // ANY input immediately resolves the choreography — the .skip class kills in-flight animations
+  // so an impatient player never waits on a flourish.
   import { createShoe } from '../engine/shoe.js';
   import { createTable } from '../engine/round.js';
   import HandView from './HandView.svelte';
@@ -8,6 +12,7 @@
   import Review from './Review.svelte';
   import { session, gradeRound, persist } from './session.svelte.js';
   import CellDrill from './CellDrill.svelte';
+  import { cue } from './audio.js';
 
   // Bankroll is the persisted one (#5): the table owns it during a round, the session owns it across reloads.
   const t = createTable({ shoe: createShoe({ seed: Date.now() }), bankroll: session.bankroll });
@@ -20,6 +25,7 @@
   let bankroll = $state(t.bankroll);
   let lastBet = $state(0);
   let drillCell = $state(null); // a review miss clicked through to a targeted drill (#5)
+  let skip = $state(false); // set by any input mid-deal; cleared when the next round starts
   const phase = $derived(round ? round.phase : 'betting');
 
   function sync() {
@@ -37,21 +43,30 @@
       gradedRound = t.round;
       gradeRound(t.round.decisions);
       persist();
+      cue(t.round.decisions.every((d) => d.correct) ? 'correct' : 'wrong');
     }
   };
-  const deal = (bet) => { lastBet = bet; act(() => t.deal(bet)); };
-  const move = (code) => act(() => ({ H: t.hit, S: t.stand, D: t.double, P: t.split, R: t.surrender })[code]());
+  const deal = (bet) => { lastBet = bet; skip = false; cue('chip'); act(() => t.deal(bet)); };
+  const move = (code) => { skip = true; cue('deal'); act(() => ({ H: t.hit, S: t.stand, D: t.double, P: t.split, R: t.surrender })[code]()); };
   const canRebet = $derived(phase === 'done' && lastBet > 0 && lastBet <= bankroll);
-  // Enter deals the next hand (but not when a button is focused — that's its own click).
+  // Every action has a key: H/S/D/P/R play the hand, Enter deals the next one. Keys are gated by
+  // the same legal-move list as the buttons, so the keyboard can never make an illegal play.
   const onkey = (e) => {
-    if (e.key === 'Enter' && canRebet && e.target.tagName !== 'BUTTON') deal(lastBet);
+    if (e.target.tagName === 'INPUT') return;
+    const code = e.key.toUpperCase();
+    if (phase === 'player' && moves.includes(code)) {
+      e.preventDefault();
+      move(code);
+    } else if (e.key === 'Enter' && canRebet && e.target.tagName !== 'BUTTON') {
+      deal(lastBet);
+    }
   };
 </script>
 
 <svelte:window onkeydown={onkey} />
 
 <div class="layout">
-<div class="felt">
+<div class="felt" class:skip onpointerdown={() => (skip = true)}>
   <header><span>Bankroll <b>${bankroll}</b></span></header>
 
   {#if round}
@@ -124,20 +139,27 @@
     border: 6px solid var(--felt-edge);
     border-radius: 1rem;
   }
-  header { align-self: stretch; color: #e8f3ec; }
-  header b { color: #fff; }
+  header { align-self: stretch; color: var(--on-felt); }
+  header b { color: var(--on-felt-strong); }
   .spots { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
   footer { display: flex; flex-direction: column; gap: 0.8rem; align-items: center; }
   .moves { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
   .moves button {
     padding: 0.6rem 1rem; border: none; border-radius: 0.4rem;
-    background: var(--btn); color: #fff; font-weight: 600; cursor: pointer;
+    background: var(--btn); color: var(--on-btn); font-weight: 600; cursor: pointer;
   }
   .result { font-size: 1.3rem; font-weight: 700; color: var(--push); margin: 0; }
   .result.win { color: var(--win); }
   .result.lose { color: var(--lose); }
+  /* "Any input skips to the resolved state": drop every in-flight card animation and flip.
+     Svelte's fly/fade compile to CSS animations, so clearing them lands each card at its
+     final position rather than rewinding it. */
+  .felt.skip :global(*) {
+    animation: none !important;
+    transition: none !important;
+  }
   .next {
     padding: 0.6rem 1.2rem; border: none; border-radius: 0.4rem;
-    background: var(--btn); color: #fff; font-weight: 700; cursor: pointer;
+    background: var(--btn); color: var(--on-btn); font-weight: 700; cursor: pointer;
   }
 </style>

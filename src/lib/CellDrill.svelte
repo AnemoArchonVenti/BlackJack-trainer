@@ -7,6 +7,7 @@
   import { explain } from '../engine/reasons.js';
   import { gradeCell, cellStats, persist } from './session.svelte.js';
   import HandView from './HandView.svelte';
+  import { cue } from './audio.js';
 
   let { cell, onClose } = $props();
 
@@ -24,6 +25,7 @@
     if (answer) return;
     answer = { chosen: code, correct: code === forGrading(correctRaw) };
     gradeCell(cell.id, answer.correct);
+    cue(answer.correct ? 'correct' : 'wrong');
     persist();
   }
   const again = () => (answer = null);
@@ -83,7 +85,7 @@
   .moves { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
   .moves button {
     padding: 0.45rem 0.7rem; border: none; border-radius: var(--r-sm);
-    background: var(--btn); color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+    background: var(--btn); color: var(--on-btn); font-weight: 600; cursor: pointer; font-size: 0.85rem;
   }
   .moves button:disabled { opacity: 0.4; cursor: not-allowed; }
   kbd { font: inherit; font-size: 0.7rem; opacity: 0.7; }
@@ -92,5 +94,5 @@
   .mark.wrong { color: var(--bad); }
   .why { margin: 0; font-size: 0.85rem; color: var(--text); }
   .stats { margin: 0; font-size: 0.75rem; color: var(--text); opacity: 0.8; }
-  .again { padding: 0.4rem 0.8rem; border: none; border-radius: var(--r-sm); background: var(--btn); color: #fff; cursor: pointer; }
+  .again { padding: 0.4rem 0.8rem; border: none; border-radius: var(--r-sm); background: var(--btn); color: var(--on-btn); cursor: pointer; }
 </style>

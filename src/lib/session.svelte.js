@@ -6,6 +6,8 @@ import { load, save } from '../srs/store.js';
 import { createProgress } from '../srs/progress.js';
 import { cellId } from '../engine/strategy.js';
 import { recordCountdown } from '../srs/gates.js';
+import { setAudioEnabled } from './audio.js';
+import { resolveMotion, prefersReducedMotion } from './motion.js';
 
 const saved = load();
 const progress = createProgress(saved.progress);
@@ -18,6 +20,21 @@ export const session = $state({
   gates: { ...saved.gates },
   revision: 0,
 });
+
+// Settings that reach outside the store get mirrored on boot (#10).
+setAudioEnabled(session.settings.audio);
+
+/** Change one setting, mirror it where it matters, and save. */
+export function setSetting(key, value) {
+  session.settings = { ...session.settings, [key]: value };
+  if (key === 'audio') setAudioEnabled(value);
+  persist();
+}
+
+/** The motion numbers for the current preference, with the OS setting layered on top (#10 F5). */
+export function motion() {
+  return resolveMotion(session.settings.motion, prefersReducedMotion());
+}
 
 export function persist() {
   return save({

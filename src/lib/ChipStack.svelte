@@ -3,7 +3,7 @@
   // Defaults to the last bet so flat-bet drilling is just repeated Deal.
   let { bankroll, lastBet = 0, onDeal } = $props();
   const DENOMS = [1, 5, 25, 100];
-  const COLORS = { 1: '#6b7a8f', 5: '#c0392b', 25: '#27ae60', 100: '#2c3e50' };
+  const COLORS = { 1: 'var(--chip-1)', 5: 'var(--chip-5)', 25: 'var(--chip-25)', 100: 'var(--chip-100)' };
   let bet = $state(0);
 
   const add = (d) => { if (bet + d <= bankroll) bet += d; };
@@ -37,8 +37,8 @@
   }
   .chip:disabled { opacity: 0.35; cursor: not-allowed; }
   .row { display: flex; gap: 0.5rem; align-items: center; }
-  .bet { color: #fff; font-weight: 700; min-width: 5rem; }
-  .deal { background: var(--btn); color: #fff; }
+  .bet { color: var(--on-felt-strong); font-weight: 700; min-width: 5rem; }
+  .deal { background: var(--btn); color: var(--on-btn); }
   button { padding: 0.4rem 0.8rem; border-radius: 0.4rem; border: none; cursor: pointer; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>

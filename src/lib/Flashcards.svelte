@@ -8,6 +8,7 @@
   import { handFor } from '../engine/hand.js';
   import { gradeCell, cellStats, persist, dueFirst } from './session.svelte.js';
   import HandView from './HandView.svelte';
+  import { cue } from './audio.js';
 
   const RULES = { decks: 6, h17: false, das: true, surrender: true }; // v1 fixed ruleset (SPEC §1)
   const ACTIONS = { H: 'Hit', S: 'Stand', D: 'Double', P: 'Split', R: 'Surrender' };
@@ -54,6 +55,7 @@
     asked += 1;
     if (correct) right += 1;
     gradeCell(card.id, correct);
+    cue(correct ? 'correct' : 'wrong');
     persist();
   }
 
@@ -167,7 +169,7 @@
   .moves { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
   .moves button, .primary {
     padding: 0.45rem 0.8rem; border: none; border-radius: var(--r-sm);
-    background: var(--btn); color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+    background: var(--btn); color: var(--on-btn); font-weight: 600; cursor: pointer; font-size: 0.85rem;
   }
   .moves button:disabled { opacity: 0.35; cursor: not-allowed; }
   kbd { font: inherit; font-size: 0.7rem; opacity: 0.7; }

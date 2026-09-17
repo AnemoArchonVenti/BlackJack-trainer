@@ -8,6 +8,7 @@
   } from '../engine/drills.js';
   import { session, recordCountdownRun } from './session.svelte.js';
   import Card from './Card.svelte';
+  import { cue } from './audio.js';
 
   const DRILLS = [
     ['tag', 'Tag speed'],
@@ -31,6 +32,7 @@
     const r = tag.drill.answer(value);
     tag.feedback = r;
     Object.assign(tag, tag.drill.stats);
+    cue(r.correct ? 'correct' : 'wrong');
     setTimeout(tagNext, r.correct ? 220 : 900); // a wrong answer lingers so the right tag registers
   }
 
@@ -52,6 +54,7 @@
     if (card) {
       cd.card = card;
       cd.left = cd.drill.remaining;
+      cue('deal');
     } else {
       cd.elapsed = performance.now() - cd.startedAt;
     }
@@ -59,6 +62,7 @@
   function cdFinish() {
     cd.result = cd.drill.finish(cd.called, Math.round(cd.elapsed));
     recordCountdownRun(cd.result);
+    cue(cd.result.clean ? 'correct' : 'wrong');
   }
 
   // ── (c) True-count conversion ───────────────────────────────────────────────────────────
@@ -74,6 +78,7 @@
     tc.result = tc.drill.answer(tc.answer);
     tc.asked += 1;
     if (tc.result.correct) tc.correct += 1;
+    cue(tc.result.correct ? 'correct' : 'wrong');
   }
 
   function onkey(e) {
@@ -213,14 +218,14 @@
     background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-edge));
   }
   .stage.tcq { flex-direction: column; gap: 0.7rem; }
-  .question { color: #fff; font-size: 1.05rem; margin: 0; }
+  .question { color: var(--on-felt-strong); font-size: 1.05rem; margin: 0; }
   .question b { font-size: 1.2rem; }
-  label { color: #fff; font-size: 0.85rem; display: flex; gap: 0.4rem; align-items: center; }
+  label { color: var(--on-felt-strong); font-size: 0.85rem; display: flex; gap: 0.4rem; align-items: center; }
   input {
     width: 4.5rem; padding: 0.35rem 0.5rem; border-radius: var(--r-sm);
     border: 1px solid var(--card-border); font: inherit; font-size: 0.9rem;
   }
-  .primary { background: var(--btn); color: #fff; border-color: transparent; font-weight: 600; }
+  .primary { background: var(--btn); color: var(--on-btn); border-color: transparent; font-weight: 600; }
   .moves { display: flex; gap: 0.5rem; }
   .moves button:disabled { opacity: 0.4; cursor: not-allowed; }
   kbd { font: inherit; font-size: 0.7rem; opacity: 0.7; }
