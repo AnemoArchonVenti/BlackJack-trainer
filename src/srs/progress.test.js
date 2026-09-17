@@ -49,3 +49,24 @@ test('state survives a save/load round-trip through the persisted blob', () => {
   const revived = createProgress(JSON.parse(JSON.stringify(p.toJSON())));
   assert.deepEqual(revived.stats('soft-7-2'), { attempts: 2, correct: 2, accuracy: 1, bucket: 'Review' });
 });
+
+test('dueFirst() orders a deck so missed cards come back before anything else (#7)', () => {
+  const p = createProgress();
+  p.grade('missed', true);
+  p.grade('missed', false); // -> Learning
+  p.grade('known', true);
+  p.grade('known', true); // -> Review
+  for (let i = 0; i < 3; i++) p.grade('mastered', true); // -> Mastered
+
+  assert.deepEqual(p.dueFirst(['known', 'mastered', 'missed', 'unseen']), ['missed', 'unseen', 'known', 'mastered'],
+    'recently missed, then never seen, then the ones already going up the boxes');
+});
+
+test('dueFirst() breaks ties by least-practised so one card cannot hog the session', () => {
+  const p = createProgress();
+  for (let i = 0; i < 4; i++) p.grade('drilled', true === (i === 0)); // 1 correct then 3 misses -> Learning, 4 attempts
+  p.grade('fresh-miss', false); // Learning, 1 attempt
+
+  assert.deepEqual(p.dueFirst(['drilled', 'fresh-miss']), ['fresh-miss', 'drilled'],
+    'same box, fewer attempts first');
+});

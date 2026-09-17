@@ -43,6 +43,18 @@ export function createProgress({ stats = {}, boxes = {}, recent = [] } = {}) {
       const window = log.slice(-n);
       return window.length ? window.reduce((a, b) => a + b, 0) / window.length : null;
     },
+    /**
+     * Order a deck of card ids the way a session should serve them (SPEC §6: "due +
+     * recently-missed first"): Learning before New before Review before Mastered, then the
+     * least-practised card first so a single stubborn card cannot hog the session.
+     */
+    dueFirst(ids) {
+      const rank = { Learning: 0, New: 1, Review: 2, Mastered: 3 };
+      return [...ids].sort((a, b) => {
+        const byBucket = rank[leitner.bucket(a)] - rank[leitner.bucket(b)];
+        return byBucket || statsFor(a).attempts - statsFor(b).attempts;
+      });
+    },
     /** Cell ids still sitting in a given bucket — the gate's "nothing left in Learning" check. */
     inBucket(bucket) {
       return Object.keys(leitner.toJSON()).filter((id) => leitner.bucket(id) === bucket);

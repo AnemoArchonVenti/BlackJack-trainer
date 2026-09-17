@@ -182,7 +182,7 @@ Source: <https://wizardofodds.com/games/blackjack/card-counting/high-low/>. "Vs.
 | 3 | 15 vs 10 | **+4** | Stand (else hit) |
 | 4 | 10,10 vs 5 | **+5** | Split tens (else stand) |
 | 5 | 10,10 vs 6 | **+4** | Split tens (else stand) |
-| 6 | 10 vs 10 (hard) | **+4** | Stand (else hit) |
+| 6 | 10 vs 10 (hard) | **+4** | Double (else hit) |
 | 7 | 12 vs 3 | **+2** | Stand (else hit) |
 | 8 | 12 vs 2 | **+3** | Stand (else hit) |
 | 9 | 11 vs A | **+1** | Double (else hit) |
@@ -196,7 +196,16 @@ Source: <https://wizardofodds.com/games/blackjack/card-counting/high-low/>. "Vs.
 | 17 | 12 vs 6 | **−1** | Stand at/above −1; hit below |
 | 18 | 13 vs 3 | **−2** | Stand at/above −2; hit below |
 
+*(**Correction 2026-09-17 (#7):** row 6 previously read "Stand (else hit)", contradicting both its own note below and the cited source. Re-fetched from the Wizard page, which lists entry 6 "10 Vs. 10 / +4 / **Double**"; you never stand a hard 10. Corrected above.)*
+
 *(Entry #6 "10 vs 10" is the hard-total 10 vs dealer 10 double decision in the Wizard's ordering; some editions list "20 vs 5/6" i.e. splitting tens as the two ten-split entries — both are represented above as #4/#5. Ordering here follows the Wizard page, which matches Schlesinger's ranking.)*
+
+**Reading the "else" clause (clarified 2026-09-17 for `engine/deviations.js`):** where a row gives an
+action only at/above the index, below the index you play **basic strategy** — except the stand-vs-low-card
+entries (#2 and #14–#18), where the table states both sides explicitly ("stand at/above, hit below").
+One case is stated on neither side: **15 vs 10 in the Fab 4** has index 0 while basic strategy *already*
+surrenders it, so an index of 0 can only mean "do not surrender below 0" — the engine hits below 0.
+That is an inference from the sourced index, not a new number.
 
 ### 3b. Fab 4 — late-surrender indices (Hi‑Lo)
 

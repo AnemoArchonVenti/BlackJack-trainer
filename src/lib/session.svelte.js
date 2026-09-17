@@ -59,6 +59,10 @@ export function recentAccuracy(n = 50) {
   session.revision;
   return progress.recentAccuracy(n);
 }
+export function dueFirst(ids) {
+  session.revision;
+  return progress.dueFirst(ids);
+}
 export function inBucket(bucket) {
   session.revision;
   return progress.inBucket(bucket);
