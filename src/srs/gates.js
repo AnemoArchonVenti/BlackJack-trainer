@@ -22,6 +22,7 @@ export function recordCountdown(gates, { clean, elapsedMs }) {
 // Thresholds are SPEC's, not invented here. Gates GUIDE: they produce a recommendation and a
 // progress readout, never a permission — nothing in this module can lock a mode (SPEC Q5=C).
 import { COUNTDOWN_TARGET_MS, CLEAN_RUNS_TO_PASS } from '../engine/drills.js';
+import { DEVIATION_CARD_IDS } from '../engine/deviations.js';
 
 export const STRATEGY_ACCURACY = 0.99; // >=99% ...
 export const STRATEGY_WINDOW = 50; // ... over the last ~50 decisions
@@ -33,7 +34,7 @@ export const STRATEGY_WINDOW = 50; // ... over the last ~50 decisions
 export function evaluateGates(progress, gates) {
   const accuracy = progress.recentAccuracy(STRATEGY_WINDOW);
   const decisions = progress.recentCount(STRATEGY_WINDOW);
-  const learningCells = progress.inBucket('Learning').length;
+  const learningCells = progress.cellsInBucket('Learning').length;
 
   const strategy = {
     accuracy,
@@ -51,7 +52,15 @@ export function evaluateGates(progress, gates) {
   };
 
   // Deviations are the third rung: they need both the chart and the count underneath them.
-  const deviations = { suggested: strategy.passed && counting.passed };
+  // "Learned" borrows the strategy gate's language — an index still in New or Learning is one
+  // you cannot be relied on to make at the table.
+  const remaining = DEVIATION_CARD_IDS.filter((id) => ['New', 'Learning'].includes(progress.stats(id).bucket));
+  const deviations = {
+    suggested: strategy.passed && counting.passed,
+    remaining: remaining.length,
+    total: DEVIATION_CARD_IDS.length,
+    passed: strategy.passed && counting.passed && remaining.length === 0,
+  };
 
   return { strategy, counting, deviations };
 }
@@ -59,7 +68,6 @@ export function evaluateGates(progress, gates) {
 /**
  * recommendNext(progress, gates) -> { route, label, why }: the single "Continue →" the guided
  * path offers. The free menu ignores this entirely.
- * ponytail: the chain ends at deviations until the integration table (#9) exists to point at.
  */
 export function recommendNext(progress, gates) {
   const g = evaluateGates(progress, gates);
@@ -82,9 +90,20 @@ export function recommendNext(progress, gates) {
     return { route: 'counting', label: 'Counting', why };
   }
 
+  if (!g.deviations.passed) {
+    return {
+      route: 'deviations',
+      label: 'Deviations',
+      why:
+        g.deviations.remaining === g.deviations.total
+          ? 'Chart and count are solid — start learning the index plays.'
+          : `${g.deviations.remaining} of ${g.deviations.total} indices still need work.`,
+    };
+  }
+
   return {
-    route: 'deviations',
-    label: 'Deviations',
-    why: 'Chart and count are solid — start learning the index plays.',
+    route: 'integration',
+    label: 'Integration',
+    why: 'Everything is in place — put the count, the bet and the indices together on one table.',
   };
 }

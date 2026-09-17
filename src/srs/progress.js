@@ -6,6 +6,12 @@ import { createLeitner } from './leitner.js';
 
 const RECENT_CAP = 200; // rolling window kept for the mastery gates (#8); ~50 is all they read.
 
+// The window is the BASIC-STRATEGY gate's evidence, so only chart cells go in it. Deviation
+// flashcards and the integration table's count/bet skill cards are graded and bucketed like any
+// other card, but a missed index must not re-open the basic-strategy gate. Membership comes from
+// the chart itself rather than an id-prefix convention.
+const CHART_CELLS = new Set(cells().map((c) => c.id));
+
 /** createProgress(saved) -> live progress. `saved` is a previously persisted toJSON(). */
 export function createProgress({ stats = {}, boxes = {}, recent = [] } = {}) {
   const cellStats = Object.fromEntries(Object.entries(stats).map(([id, s]) => [id, { ...s }]));
@@ -20,8 +26,10 @@ export function createProgress({ stats = {}, boxes = {}, recent = [] } = {}) {
       const s = (cellStats[cellId] ??= { attempts: 0, correct: 0 });
       s.attempts += 1;
       if (correct) s.correct += 1;
-      log.push(correct ? 1 : 0);
-      if (log.length > RECENT_CAP) log = log.slice(-RECENT_CAP);
+      if (CHART_CELLS.has(cellId)) {
+        log.push(correct ? 1 : 0);
+        if (log.length > RECENT_CAP) log = log.slice(-RECENT_CAP);
+      }
       return { bucket: leitner.grade(cellId, correct), ...s };
     },
     stats(cellId) {
@@ -38,7 +46,7 @@ export function createProgress({ stats = {}, boxes = {}, recent = [] } = {}) {
       return cells().map((cell) => ({ ...cell, ...this.stats(cell.id) }));
     },
     counts: leitner.counts,
-    /** Accuracy over the last n decisions (any cell) — the strategy gate's numerator. */
+    /** Accuracy over the last n basic-strategy decisions — the strategy gate's numerator. */
     recentAccuracy(n = 50) {
       const window = log.slice(-n);
       return window.length ? window.reduce((a, b) => a + b, 0) / window.length : null;
@@ -59,9 +67,13 @@ export function createProgress({ stats = {}, boxes = {}, recent = [] } = {}) {
     recentCount(n = 50) {
       return Math.min(log.length, n);
     },
-    /** Cell ids still sitting in a given bucket — the gate's "nothing left in Learning" check. */
-    inBucket(bucket) {
-      return Object.keys(leitner.toJSON()).filter((id) => leitner.bucket(id) === bucket);
+    /**
+     * Chart cells still sitting in a given bucket — the strategy gate's "nothing left in
+     * Learning" check. Deliberately CELLS, not cards: a missed index play or a miscounted shoe
+     * belongs to its own curriculum and must not hold the basic-strategy gate open.
+     */
+    cellsInBucket(bucket) {
+      return Object.keys(leitner.toJSON()).filter((id) => CHART_CELLS.has(id) && leitner.bucket(id) === bucket);
     },
     toJSON() {
       return { stats: cellStats, boxes: leitner.toJSON(), recent: log };

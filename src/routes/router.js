@@ -6,6 +6,7 @@ export const ROUTES = [
   { id: 'play', path: '/play', label: 'Play', blurb: 'Full rounds with a graded recap' },
   { id: 'counting', path: '/counting', label: 'Counting', blurb: 'Tag speed, deck countdown, true count' },
   { id: 'deviations', path: '/deviations', label: 'Deviations', blurb: 'Illustrious 18 + Fab 4 flashcards' },
+  { id: 'integration', path: '/integration', label: 'Integration', blurb: 'Count, bet and deviate — graded per shoe' },
   { id: 'progress', path: '/progress', label: 'Progress', blurb: 'Reference chart and accuracy heatmap' },
 ];
 

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { evaluateGates, recommendNext, recordCountdown, STRATEGY_ACCURACY, STRATEGY_WINDOW } from './gates.js';
 import { createProgress } from './progress.js';
 import { defaults } from './store.js';
+import { DEVIATION_CARD_IDS } from '../engine/deviations.js';
 
 // A player who keeps coming back to the same ten spots: cycling a small pool means cells are
 // re-earned rather than seen once, which is what moves them out of Learning (see leitner.test.js).
@@ -98,4 +99,25 @@ test('the counting gate reads the same numbers recordCountdown writes', () => {
 
   gates = recordCountdown(gates, { clean: false, elapsedMs: 40_000 });
   assert.equal(evaluateGates(progress, gates).counting.passed, false, 'a broken streak re-opens the gate');
+});
+
+test('once the indices are learned the guided path ends at the integration table (#9)', () => {
+  const { progress, gates } = profile({ decisions: 50, cleanRuns: 5, bestMs: 24_000 });
+  assert.equal(recommendNext(progress, gates).route, 'deviations', 'indices are still unlearned');
+  assert.equal(evaluateGates(progress, gates).deviations.passed, false);
+
+  // Two correct answers take a card New -> Learning -> Review, which is "learned" for a gate.
+  for (const id of DEVIATION_CARD_IDS) {
+    progress.grade(id, true);
+    progress.grade(id, true);
+  }
+  const g = evaluateGates(progress, gates);
+  assert.equal(g.deviations.passed, true, 'every index is out of New and Learning');
+  assert.equal(g.deviations.remaining, 0);
+  assert.equal(recommendNext(progress, gates).route, 'integration', 'the capstone is what is left');
+
+  // One forgotten index re-opens the gate and pulls the recommendation back.
+  progress.grade(DEVIATION_CARD_IDS[0], false);
+  assert.equal(evaluateGates(progress, gates).deviations.remaining, 1);
+  assert.equal(recommendNext(progress, gates).route, 'deviations');
 });

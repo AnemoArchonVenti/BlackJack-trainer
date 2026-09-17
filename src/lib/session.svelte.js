@@ -72,6 +72,13 @@ export function nextStep() {
   return recommendNext(progress, session.gates);
 }
 
+/** Grade a batch of SRS cards in one go (the integration table settles several per round). */
+export function gradeCards(entries) {
+  for (const { id, correct } of entries) progress.grade(id, correct);
+  session.revision += 1;
+  persist();
+}
+
 export function heatmap() {
   session.revision;
   return progress.heatmap();
@@ -92,9 +99,9 @@ export function dueFirst(ids) {
   session.revision;
   return progress.dueFirst(ids);
 }
-export function inBucket(bucket) {
+export function cellsInBucket(bucket) {
   session.revision;
-  return progress.inBucket(bucket);
+  return progress.cellsInBucket(bucket);
 }
 
 /** Record a countdown run against the counting gate and save (#6). Returns the updated gates. */

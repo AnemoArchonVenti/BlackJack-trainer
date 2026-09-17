@@ -4,7 +4,7 @@ import { ROUTES, MODES, parseRoute, hrefFor } from './router.js';
 
 test('the route table is the dashboard plus one entry per practice mode', () => {
   assert.equal(ROUTES[0].id, 'dashboard', 'the landing route is the dashboard hub (F3)');
-  assert.deepEqual(MODES.map((r) => r.id), ['play', 'counting', 'deviations', 'progress'],
+  assert.deepEqual(MODES.map((r) => r.id), ['play', 'counting', 'deviations', 'integration', 'progress'],
     'every mode is reachable from the free menu');
   for (const r of ROUTES) {
     assert.ok(r.label, `${r.id} has a nav label`);

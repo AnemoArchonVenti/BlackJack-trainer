@@ -70,3 +70,31 @@ test('dueFirst() breaks ties by least-practised so one card cannot hog the sessi
   assert.deepEqual(p.dueFirst(['drilled', 'fresh-miss']), ['fresh-miss', 'drilled'],
     'same box, fewer attempts first');
 });
+
+test('the recent window counts strategy decisions only, not flashcards or skill cards', () => {
+  const p = createProgress();
+  for (let i = 0; i < 4; i++) p.grade('hard-16-10', true);
+  assert.equal(p.recentAccuracy(50), 1);
+  assert.equal(p.recentCount(50), 4);
+
+  // A missed index play and a miscounted shoe are real misses for THEIR cards...
+  p.grade('dev-hard-12-4', false);
+  p.grade('skill-count-tracking', false);
+  assert.equal(p.stats('dev-hard-12-4').bucket, 'Learning');
+  assert.equal(p.stats('skill-count-tracking').attempts, 1);
+
+  // ...but they are not basic-strategy decisions, so they must not move the strategy gate.
+  assert.equal(p.recentCount(50), 4, 'the window still holds only the four chart decisions');
+  assert.equal(p.recentAccuracy(50), 1, 'a flashcard miss cannot re-open the strategy gate');
+});
+
+test('cellsInBucket reports chart cells only — a card is not a cell', () => {
+  const p = createProgress();
+  p.grade('hard-16-10', false); // a chart cell in Learning
+  p.grade('dev-hard-12-4', false); // an index play in Learning
+  p.grade('skill-bet-sizing', false); // a skill card in Learning
+
+  assert.deepEqual(p.cellsInBucket('Learning'), ['hard-16-10'],
+    'the strategy gate must not be held open by a missed flashcard');
+  assert.equal(p.stats('dev-hard-12-4').bucket, 'Learning', 'the card is still tracked, just not a cell');
+});

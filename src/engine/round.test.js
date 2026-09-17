@@ -153,3 +153,49 @@ test('surrender: lose half the bet, dealer does not draw', () => {
   assert.equal(t.bankroll, 950);
   assert.equal(t.round.dealer.length, 2);
 });
+
+// ── Deviation-aware grading (#9): the integration table expects index plays ────────────────
+test('with deviations on, a decision is graded against the index, not just the chart', () => {
+  // 16 vs 10 at a positive true count: the chart surrenders, the index stands (research §3a #2).
+  // Rig a shoe whose exposed cards leave the count high before the player acts.
+  const hot = [...Array(10).fill(5), 10, 10, 6, 7]; // ten 5s pre-drawn (+10), then 16 vs 10
+  const t = createTable({ shoe: createShoe({ decks: 1, cards: hot }), bankroll: 1000, rules: { deviations: true } });
+  for (let i = 0; i < 10; i++) t.shoe.draw(); // burn the 5s so the count is running hot
+  assert.ok(t.shoe.trueCount > 0, 'the shoe is genuinely positive before the deal');
+
+  t.deal(100);
+  t.stand();
+  const d = t.round.decisions[0];
+  assert.equal(d.chosen, 'S');
+  assert.equal(d.correct, true, 'standing 16 vs 10 at a plus count is the index play');
+  assert.equal(d.wasDeviation, true, 'and the record says it departed from the chart');
+  assert.equal(d.correctAction, 'S');
+});
+
+test('with deviations on, the chart still rules when the count has not crossed the index', () => {
+  // Same 16 vs 10, but a cold shoe: below TC 0 the index says hit, not surrender or stand.
+  const cold = [...Array(10).fill(10), 10, 10, 6, 7];
+  const t = createTable({ shoe: createShoe({ decks: 1, cards: cold }), bankroll: 1000, rules: { deviations: true } });
+  for (let i = 0; i < 10; i++) t.shoe.draw();
+  assert.ok(t.shoe.trueCount < 0, 'the shoe is genuinely negative before the deal');
+
+  t.deal(100);
+  t.stand();
+  const d = t.round.decisions[0];
+  assert.equal(d.correct, false, 'standing is wrong here');
+  assert.equal(d.correctAction, 'H', '16 vs 10 below 0 is a hit (research §3a #2)');
+  assert.equal(d.wasDeviation, true, 'the low-side index play is still a departure from the chart');
+});
+
+test('deviations stay OFF by default, so the strategy table grades the chart alone', () => {
+  const hot = [...Array(10).fill(5), 10, 10, 6, 7];
+  const t = createTable({ shoe: createShoe({ decks: 1, cards: hot }), bankroll: 1000 });
+  for (let i = 0; i < 10; i++) t.shoe.draw();
+
+  t.deal(100);
+  t.stand();
+  const d = t.round.decisions[0];
+  assert.equal(d.correctAction, 'Rh', 'Mode 1 still teaches basic strategy');
+  assert.equal(d.correct, false);
+  assert.equal(d.wasDeviation, false);
+});

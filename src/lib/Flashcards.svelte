@@ -3,7 +3,10 @@
   // the card HANDS you the true count, you name the action. Grading runs through the same
   // getDeviation -> getCorrectAction fallback the integration table will use, so there is one
   // answer key. Missed indices come back first, scheduled by the SRS (#5).
-  import { DEVIATIONS, INSURANCE_INDEX, getDeviation, deviationsAvailable, shouldInsure } from '../engine/deviations.js';
+  import {
+    DEVIATIONS, DEVIATION_CARD_IDS, INSURANCE_CARD_ID, INSURANCE_INDEX,
+    getDeviation, deviationsAvailable, shouldInsure,
+  } from '../engine/deviations.js';
   import { getCorrectAction, forGrading } from '../engine/strategy.js';
   import { handFor } from '../engine/hand.js';
   import { gradeCell, cellStats, persist, dueFirst } from './session.svelte.js';
@@ -12,7 +15,6 @@
 
   const RULES = { decks: 6, h17: false, das: true, surrender: true }; // v1 fixed ruleset (SPEC §1)
   const ACTIONS = { H: 'Hit', S: 'Stand', D: 'Double', P: 'Split', R: 'Surrender' };
-  const INSURANCE_ID = 'dev-insurance';
   const guard = deviationsAvailable(RULES);
 
   let card = $state(null);
@@ -20,7 +22,7 @@
   let asked = $state(0);
   let right = $state(0);
 
-  const ids = [INSURANCE_ID, ...DEVIATIONS.map((e) => e.id)];
+  const ids = DEVIATION_CARD_IDS;
 
   // Pose a true count near the entry's index so both sides of the threshold come up: sometimes
   // the deviation is on, sometimes the honest answer is "just play the chart".
@@ -32,7 +34,7 @@
     const id = queue[Math.floor(Math.random() * Math.min(4, queue.length))];
     answer = null;
 
-    if (id === INSURANCE_ID) {
+    if (id === INSURANCE_CARD_ID) {
       card = { id, kind: 'insurance', trueCount: nearIndex(INSURANCE_INDEX), play: 'Insurance' };
       return;
     }

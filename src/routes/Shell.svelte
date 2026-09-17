@@ -8,9 +8,13 @@
   import Table from '../lib/Table.svelte';
   import Counting from '../lib/Counting.svelte';
   import Flashcards from '../lib/Flashcards.svelte';
+  import Integration from '../lib/Integration.svelte';
   import Progress from '../lib/Progress.svelte';
 
-  const VIEWS = { dashboard: Dashboard, play: Table, counting: Counting, deviations: Flashcards, progress: Progress };
+  const VIEWS = {
+    dashboard: Dashboard, play: Table, counting: Counting,
+    deviations: Flashcards, integration: Integration, progress: Progress,
+  };
 
   let hash = $state(typeof location === 'undefined' ? '' : location.hash);
   const route = $derived(parseRoute(hash));

@@ -47,6 +47,12 @@ export const DEVIATIONS = [
   { id: 'dev-hard-15-11', play: '15 vs A', type: 'hard', key: 15, up: 11, index: 1, at: 'R' },
 ];
 
+/** Insurance is drilled as its own card, so it needs an SRS id like every table entry. */
+export const INSURANCE_CARD_ID = 'dev-insurance';
+
+/** Every card the deviation curriculum covers: insurance plus each table entry. */
+export const DEVIATION_CARD_IDS = [INSURANCE_CARD_ID, ...DEVIATIONS.map((e) => e.id)];
+
 /**
  * deviationsAvailable(rules) -> { available, notice }.
  * The table is tagged S17. Research §3c is explicit that several vs-Ace indices shift under H17

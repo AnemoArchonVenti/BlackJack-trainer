@@ -4,6 +4,7 @@
 import { value, isPair } from './hand.js';
 import { createShoe } from './shoe.js';
 import { getCorrectAction, forGrading } from './strategy.js';
+import { getDeviation } from './deviations.js';
 
 // Else-actions when the chart move isn't legal for the current hand (grading-legality-handoff):
 // a 3-card 11 can't double (D->H), a post-hit soft 18 can't double (Ds->S), a 3-card 16 can't surrender (Rh->H).
@@ -63,7 +64,11 @@ export function createTable({ shoe, bankroll = 1000, rules = {} } = {}) {
   // the raw Ds/Rh code for #4's reason text; `correct` compares the collapsed button to the player.
   function record(chosen) {
     const h = activeHand();
-    const raw = getCorrectAction(h.cards, round.dealer[0], rules);
+    const trueCount = shoe.trueCount;
+    // The integration table (#9) expects index plays; Mode 1 grades the chart alone. Either way
+    // there is one answer key: the deviation when the count crosses an index, else the chart.
+    const deviation = rules.deviations ? getDeviation(h.cards, round.dealer[0], trueCount, rules) : null;
+    const raw = deviation ?? getCorrectAction(h.cards, round.dealer[0], rules);
     // ponytail: P-illegal (resplit cap / broke) has no chart else-action — leave it P; never arises in play.
     const correctAction = table.legalMoves().includes(forGrading(raw)) ? raw : ELSE[raw] ?? raw;
     round.decisions.push({
@@ -72,7 +77,8 @@ export function createTable({ shoe, bankroll = 1000, rules = {} } = {}) {
       chosen,
       correctAction,
       correct: chosen === forGrading(correctAction),
-      trueCount: shoe.trueCount,
+      wasDeviation: deviation !== null,
+      trueCount,
     });
   }
 

@@ -19,7 +19,7 @@
   const pct = (n) => (n === null ? '—' : `${Math.round(n * 100)}%`);
   const secs = (ms) => (ms === null ? '—' : `${(ms / 1000).toFixed(1)}s`);
 
-  // The three rungs of the path, in order (SPEC §6). `done` drives the tick, never a lock.
+  // The rungs of the path, in order (SPEC §6). `done` drives the tick, never a lock.
   const path = $derived([
     {
       id: 'play',
@@ -38,9 +38,20 @@
     {
       id: 'deviations',
       name: 'Deviations',
+      done: gates.deviations.passed,
+      detail: gates.deviations.suggested
+        ? `${gates.deviations.total - gates.deviations.remaining}/${gates.deviations.total} indices learned`
+        : 'sits behind strategy and counting',
+      target: 'every index out of New and Learning',
+    },
+    {
+      id: 'integration',
+      name: 'Integration table',
       done: false,
-      detail: gates.deviations.suggested ? 'open — the chart and the count are solid' : 'sits behind strategy and counting',
-      target: 'Illustrious 18 + Fab 4',
+      detail: gates.deviations.passed
+        ? 'open — count it, bet it and deviate, all at once'
+        : 'the capstone, once the three below are in place',
+      target: 'the whole game, graded per shoe',
     },
   ]);
 </script>
