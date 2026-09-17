@@ -63,10 +63,10 @@
   };
 </script>
 
-<svelte:window onkeydown={onkey} />
+<svelte:window onkeydown={onkey} onpointerdown={() => (skip = true)} />
 
 <div class="layout">
-<div class="felt" class:skip onpointerdown={() => (skip = true)}>
+<div class="felt" class:skip>
   <header><span>Bankroll <b>${bankroll}</b></span></header>
 
   {#if round}

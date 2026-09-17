@@ -124,7 +124,7 @@
   ];
 </script>
 
-<svelte:window onkeydown={onkey} />
+<svelte:window onkeydown={onkey} onpointerdown={() => (skip = true)} />
 
 <section class="integration">
   {#if report}
@@ -158,7 +158,7 @@
       graded when the shoe hits the cut card.
     </p>
 
-    <div class="felt" class:skip onpointerdown={() => (skip = true)}>
+    <div class="felt" class:skip>
       <header>
         <span>Bankroll <b>${bankroll}</b></span>
         <span class="rounds">{history.length} rounds this shoe</span>
