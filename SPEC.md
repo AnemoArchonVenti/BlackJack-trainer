@@ -134,7 +134,7 @@ Single JSON blob in `localStorage`: SRS buckets, per-cell stats, bankroll, setti
 ## 9. Open items / carried caveats
 
 1. **H17 index set not sourced** — blocks any H17 rules toggle. Do not invent (research §3c).
-2. **Blackjack Apprenticeship drill numbers** (30s countdown, 5-clean-runs) — re-verify against the live page when building counting mode (fetch was 403).
+2. ~~**Blackjack Apprenticeship drill numbers** (30s countdown, 5-clean-runs) — re-verify against the live page when building counting mode (fetch was 403).~~ **Resolved 2026-09-17 (#6):** BJA still 403s to automated fetches; the numbers were re-verified against corroborating practice literature and hold (30s target / 25s stretch / 5 clean runs). See research §2d "Re-verification".
 3. **Heuristic "why" templates** — ~15–20 to author during strategy-mode build (§4.4).
 4. **Advanced counting systems** (KO easy-mode, Wong Halves) — out of v1 scope; Hi-Lo only.
 

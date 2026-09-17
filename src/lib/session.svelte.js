@@ -5,6 +5,7 @@
 import { load, save } from '../srs/store.js';
 import { createProgress } from '../srs/progress.js';
 import { cellId } from '../engine/strategy.js';
+import { recordCountdown } from '../srs/gates.js';
 
 const saved = load();
 const progress = createProgress(saved.progress);
@@ -61,4 +62,11 @@ export function recentAccuracy(n = 50) {
 export function inBucket(bucket) {
   session.revision;
   return progress.inBucket(bucket);
+}
+
+/** Record a countdown run against the counting gate and save (#6). Returns the updated gates. */
+export function recordCountdownRun(result) {
+  session.gates = recordCountdown(session.gates, result);
+  persist();
+  return session.gates;
 }

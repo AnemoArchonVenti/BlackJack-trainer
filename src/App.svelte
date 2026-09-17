@@ -3,9 +3,10 @@
   // the real nav/dashboard shell and consolidates tokens/motion — not a hard dependency.
   import Table from './lib/Table.svelte';
   import Progress from './lib/Progress.svelte';
+  import Counting from './lib/Counting.svelte';
 
   let view = $state('play');
-  const VIEWS = [['play', 'Play'], ['progress', 'Progress']];
+  const VIEWS = [['play', 'Play'], ['counting', 'Counting'], ['progress', 'Progress']];
 </script>
 
 <main>
@@ -16,7 +17,7 @@
     {/each}
   </nav>
 
-  {#if view === 'play'}<Table />{:else}<Progress />{/if}
+  {#if view === 'play'}<Table />{:else if view === 'counting'}<Counting />{:else}<Progress />{/if}
 </main>
 
 <style>

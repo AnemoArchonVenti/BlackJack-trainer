@@ -154,6 +154,13 @@ Progression, per Blackjack Apprenticeship / practice literature:
 5. **Distraction drills:** loud music with lyrics, a person asking questions you must answer mid-deck, and interruption-recovery (pause, do something else, resume). Source: BJA / thecardcounting.com.
 6. **Full-shoe / bet-and-play integration:** count a dealt shoe, size bets by TC, and make correct playing decisions simultaneously.
 
+**Re-verification (2026-09-17, issue #6):** the Blackjack Apprenticeship pages still return **403** to
+automated fetches, so the primary source remains unreadable by tooling. The benchmark numbers were
+re-checked against secondary practice literature and hold as stated: **under 30 seconds** to count down a
+deck, **25 seconds** as the stretch goal, **5 clean runs in a row** before advancing. Corroborating source:
+<https://thecardcounting.com/blog/how-to-practice-card-counting>. These three numbers are the exported
+constants in `engine/drills.js` and are asserted in `engine/drills.test.js`.
+
 **Balanced vs unbalanced for drilling:** balanced (Hi‑Lo) gives a free self-check — a correctly counted full deck/shoe returns to 0 — which is pedagogically valuable, so the countdown drill should assume a balanced count.
 
 ---
