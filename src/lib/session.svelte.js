@@ -5,7 +5,7 @@
 import { load, save } from '../srs/store.js';
 import { createProgress } from '../srs/progress.js';
 import { cellId } from '../engine/strategy.js';
-import { recordCountdown } from '../srs/gates.js';
+import { recordCountdown, evaluateGates, recommendNext } from '../srs/gates.js';
 import { setAudioEnabled } from './audio.js';
 import { resolveMotion, prefersReducedMotion } from './motion.js';
 
@@ -58,6 +58,18 @@ export function gradeRound(decisions) {
   for (const d of decisions) progress.grade(cellId(d.hand, d.upcard), d.correct);
   session.revision += 1;
   persist();
+}
+
+/** Mastery-gate progress for the guided path (#8). Suggestions only — nothing locks. */
+export function gateProgress() {
+  session.revision;
+  return evaluateGates(progress, session.gates);
+}
+
+/** The single "Continue ->" the dashboard offers. */
+export function nextStep() {
+  session.revision;
+  return recommendNext(progress, session.gates);
 }
 
 export function heatmap() {

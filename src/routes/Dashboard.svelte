@@ -1,30 +1,76 @@
 <script>
-  // The landing hub (SPEC §11 F3): where you are, and one prominent thing to do next.
-  // Progress snapshot = heatmap thumbnail + bucket counts + bankroll; the Continue CTA is the
-  // guided path's single recommendation.
-  // ponytail: the recommendation is a fixed "start with strategy" until #8 lands the mastery
-  // gates — this component reads `recommended`, so #8 only has to swap where that comes from.
+  // The landing hub (SPEC §11 F3) and the guided path (#8): where you are, and one prominent
+  // thing to do next. The recommendation comes from the mastery gates in srs/gates.js, which read
+  // persisted progress. It is a suggestion and nothing else — every mode stays one click away in
+  // the nav whatever the gates say (SPEC Q5=C).
   import Chart from '../lib/Chart.svelte';
-  import { hrefFor, MODES } from './router.js';
-  import { bucketCounts, recentAccuracy, session } from '../lib/session.svelte.js';
+  import { hrefFor, ROUTES } from './router.js';
+  import { bucketCounts, recentAccuracy, gateProgress, nextStep, session } from '../lib/session.svelte.js';
   import { CLEAN_RUNS_TO_PASS } from '../engine/drills.js';
+  import { STRATEGY_ACCURACY, STRATEGY_WINDOW } from '../srs/gates.js';
 
   const counts = $derived(bucketCounts());
   const recent = $derived(recentAccuracy(50));
   const played = $derived(Object.values(counts).reduce((a, b) => a + b, 0));
+  const gates = $derived(gateProgress());
+  const next = $derived(nextStep());
+  const blurb = $derived(ROUTES.find((r) => r.id === next.route)?.blurb ?? '');
 
-  const recommended = $derived(
-    MODES.find((m) => m.id === 'play')
-  );
   const pct = (n) => (n === null ? '—' : `${Math.round(n * 100)}%`);
+  const secs = (ms) => (ms === null ? '—' : `${(ms / 1000).toFixed(1)}s`);
+
+  // The three rungs of the path, in order (SPEC §6). `done` drives the tick, never a lock.
+  const path = $derived([
+    {
+      id: 'play',
+      name: 'Basic strategy',
+      done: gates.strategy.passed,
+      detail: `${pct(gates.strategy.accuracy)} over ${gates.strategy.decisions}/${STRATEGY_WINDOW} decisions · ${gates.strategy.learningCells} still in Learning`,
+      target: `${Math.round(STRATEGY_ACCURACY * 100)}% and nothing left in Learning`,
+    },
+    {
+      id: 'counting',
+      name: 'Card counting',
+      done: gates.counting.passed,
+      detail: `best ${secs(gates.counting.bestMs)} · ${gates.counting.cleanRuns}/${CLEAN_RUNS_TO_PASS} clean runs`,
+      target: `a deck under 30s, ${CLEAN_RUNS_TO_PASS} times in a row`,
+    },
+    {
+      id: 'deviations',
+      name: 'Deviations',
+      done: false,
+      detail: gates.deviations.suggested ? 'open — the chart and the count are solid' : 'sits behind strategy and counting',
+      target: 'Illustrious 18 + Fab 4',
+    },
+  ]);
 </script>
 
 <section class="dash">
-  <a class="continue" href={hrefFor(recommended.id)}>
+  <a class="continue" href={hrefFor(next.route)}>
     <span class="kicker">Continue</span>
-    <span class="target">{recommended.label} <span aria-hidden="true">→</span></span>
-    <span class="blurb">{recommended.blurb}</span>
+    <span class="target">{next.label} <span aria-hidden="true">→</span></span>
+    <span class="blurb">{next.why}</span>
+    <span class="blurb faint">{blurb}</span>
   </a>
+
+  <section class="path" aria-label="Guided path">
+    <h2 class="path-head">
+      Guided path <span class="note">— suggestions, not locks. Every mode is open in the nav.</span>
+    </h2>
+    <ol>
+      {#each path as step (step.id)}
+        <li class:done={step.done} class:current={step.id === next.route}>
+          <span class="tick" aria-hidden="true">{step.done ? '✓' : step.id === next.route ? '›' : '·'}</span>
+          <div>
+            <a href={hrefFor(step.id)}>{step.name}</a>
+            {#if step.done}<span class="badge">passed</span>{/if}
+            <p class="detail">{step.detail}</p>
+            <p class="detail faint">Gate: {step.target}</p>
+          </div>
+        </li>
+      {/each}
+    </ol>
+  </section>
 
   <div class="cards">
     <article class="snapshot">
@@ -40,9 +86,9 @@
 
     <article class="snapshot">
       <h2>Counting</h2>
-      <p class="big">{session.gates.countdownBestMs ? `${(session.gates.countdownBestMs / 1000).toFixed(1)}s` : '—'}</p>
+      <p class="big">{secs(gates.counting.bestMs)}</p>
       <p class="sub">best clean deck countdown</p>
-      <p class="sub">Clean-run streak {session.gates.cleanRuns}/{CLEAN_RUNS_TO_PASS}</p>
+      <p class="sub">Clean-run streak {gates.counting.cleanRuns}/{CLEAN_RUNS_TO_PASS}</p>
     </article>
 
     <article class="snapshot">
@@ -73,6 +119,26 @@
   .kicker { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.85; }
   .target { font-size: 1.35rem; font-weight: 700; }
   .blurb { font-size: 0.85rem; opacity: 0.9; }
+  .faint { opacity: 0.65; font-size: 0.78rem; }
+
+  .path {
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    background: var(--panel); padding: 0.9rem 1.1rem;
+  }
+  .path-head { margin: 0 0 0.6rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); }
+  .note { text-transform: none; letter-spacing: 0; font-weight: 400; opacity: 0.85; }
+  .path ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+  .path li { display: flex; gap: 0.6rem; align-items: flex-start; }
+  .tick { font-weight: 800; width: 1rem; color: var(--text); }
+  .path li.done .tick { color: var(--good); }
+  .path li.current .tick { color: var(--accent); }
+  .path a { color: var(--text-h); font-weight: 600; font-size: 0.92rem; text-decoration: none; }
+  .path a:hover { text-decoration: underline; }
+  .badge {
+    margin-left: 0.4rem; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--accent-bg); color: var(--text-h); padding: 0.1rem 0.35rem; border-radius: 999px;
+  }
+  .detail { font-size: 0.78rem; opacity: 0.85; margin: 0.1rem 0 0; }
 
   .cards { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
   .snapshot {

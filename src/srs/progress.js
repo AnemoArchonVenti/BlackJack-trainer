@@ -55,6 +55,10 @@ export function createProgress({ stats = {}, boxes = {}, recent = [] } = {}) {
         return byBucket || statsFor(a).attempts - statsFor(b).attempts;
       });
     },
+    /** How many decisions the window actually holds — a gate needs a full one. */
+    recentCount(n = 50) {
+      return Math.min(log.length, n);
+    },
     /** Cell ids still sitting in a given bucket — the gate's "nothing left in Learning" check. */
     inBucket(bucket) {
       return Object.keys(leitner.toJSON()).filter((id) => leitner.bucket(id) === bucket);
