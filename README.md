@@ -1,43 +1,60 @@
-# Svelte + Vite
+# Blackjack Trainer
 
-This template should help get you started developing with Svelte in Vite.
+A web app that trains three blackjack skills, in order: **basic strategy → Hi-Lo card counting →
+playing deviations (index plays)**. You play full single-spot rounds, get an end-of-round review
+explaining each decision, and are guided along a recommended path while free to practise anything.
+Progress is tracked per chart cell with Leitner buckets and an accuracy heatmap.
 
-## Recommended IDE Setup
+**Ruleset (fixed):** 6 decks, dealer stands on soft 17, double after split, late surrender. The
+engine is rules-aware so other rulesets can be added once their numbers are sourced.
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+No backend, no accounts, no real money. Everything persists to `localStorage`.
 
-## Need an official Svelte framework?
+## Running it
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
-
-## Technical considerations
-
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `checkJs` in the JS template?**
-
-It is likely that most cases of changing variable types in runtime are likely to be accidental, rather than deliberate. This provides advanced typechecking out of the box. Should you like to take advantage of the dynamically-typed nature of JavaScript, it is trivial to change the configuration.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/sveltejs/svelte-hmr/tree/master/packages/svelte-hmr#preservation-of-local-state).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```js
-// store.js
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+```sh
+npm install
+npm run dev     # dev server
+npm run build   # production bundle
+npm test        # engine + srs unit tests (node:test, no framework)
 ```
+
+## Modes
+
+| Mode | What it drills |
+|---|---|
+| **Play** | Full rounds with a flat bet, then a graded recap: ✓/✗ per decision, the correct action, a heuristic "why", and the chart cell behind each miss. |
+| **Counting** | Tag speed, deck countdown (under 30s, five clean runs), and true-count conversion — all graded against the shoe's own count. |
+| **Deviations** | Illustrious 18 + Fab 4 flashcards. The count is handed to you; you name the play. |
+| **Integration** | The capstone: keep the count yourself, size the bet by it, make the index plays. Graded per shoe on count, bets, play and deviations. |
+| **Progress** | One grid, two faces — the canonical strategy chart, and the same grid coloured by your accuracy. Click any cell to drill it. |
+
+## Architecture
+
+```
+src/
+  engine/    strategy, charts, deviations, shoe, hand, drills, betting, reasons, integration
+  srs/       leitner buckets, per-cell progress, mastery gates, localStorage
+  lib/       shared Svelte UI, motion, audio, the live session
+  routes/    app shell, hash router, dashboard
+```
+
+**`engine/` and `srs/` contain zero Svelte imports** and are unit-tested in Node. The strategy
+engine is the single grading oracle — no mode re-implements strategy, counting or the indices.
+
+## Where the numbers come from
+
+`research/blackjack-trainer-research.md` is the source of truth for every chart cell, Hi-Lo tag,
+index and drill benchmark, each traced to a cited source. **Do not hand-edit a number in the
+code** — fix it in research first, then mirror it. The test suite transcribes the charts
+independently from research and compares cell for cell, so a drift between the two fails the build.
+
+`SPEC.md` holds the product and front-end specification (§11 is the front end).
+
+## Carried caveats
+
+- **H17 indices are not sourced.** The deviation table is tagged S17; an H17 ruleset disables
+  deviations with a notice rather than inventing numbers (research §3c).
+- **The bet ramp's rungs are a convention.** The 1–15 spread and "table minimum at TC ≤ +1" are
+  sourced; the individual rungs are not, so the trainer shows the ramp rather than hiding it.
+- **No UI test framework in v1** (SPEC §8) — the tests cover the pure layers.
