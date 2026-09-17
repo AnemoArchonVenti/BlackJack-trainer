@@ -1,0 +1,64 @@
+// The one live session: bankroll, settings, gate progress and the SRS, hydrated from the
+// localStorage blob on boot and saved after every round/drill (SPEC §7).
+// Svelte 5 runes are the rune-era equivalent of a `writable` store — Svelte-native, no external
+// state library (#10). The `srs/` modules stay pure; this file is the only reactive wrapper.
+import { load, save } from '../srs/store.js';
+import { createProgress } from '../srs/progress.js';
+import { cellId } from '../engine/strategy.js';
+
+const saved = load();
+const progress = createProgress(saved.progress);
+
+// `revision` is the reactivity handle for the non-reactive progress module: every read below
+// touches it, every grade bumps it, so $derived views recompute without cloning the SRS state.
+export const session = $state({
+  bankroll: saved.bankroll,
+  settings: { ...saved.settings },
+  gates: { ...saved.gates },
+  revision: 0,
+});
+
+export function persist() {
+  return save({
+    version: 1,
+    bankroll: session.bankroll,
+    settings: session.settings,
+    gates: session.gates,
+    progress: progress.toJSON(),
+  });
+}
+
+/** Grade one cell into the SRS. Returns the cell's new bucket. */
+export function gradeCell(id, correct) {
+  const bucket = progress.grade(id, correct).bucket;
+  session.revision += 1;
+  return bucket;
+}
+
+/** Feed a finished round's decisions to Leitner + the heatmap, then save (#5). */
+export function gradeRound(decisions) {
+  for (const d of decisions) progress.grade(cellId(d.hand, d.upcard), d.correct);
+  session.revision += 1;
+  persist();
+}
+
+export function heatmap() {
+  session.revision;
+  return progress.heatmap();
+}
+export function cellStats(id) {
+  session.revision;
+  return progress.stats(id);
+}
+export function bucketCounts() {
+  session.revision;
+  return progress.counts();
+}
+export function recentAccuracy(n = 50) {
+  session.revision;
+  return progress.recentAccuracy(n);
+}
+export function inBucket(bucket) {
+  session.revision;
+  return progress.inBucket(bucket);
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getCorrectAction, forGrading } from './strategy.js';
+import { getCorrectAction, forGrading, cellId, cells } from './strategy.js';
 
 // Card builder (SPEC §3). Dealer columns run 2 3 4 5 6 7 8 9 10 A -> index 0..9.
 const c = (rank) => ({ rank, value: rank === 'A' ? 11 : rank });
@@ -112,4 +112,29 @@ test('H17 rule delta: 11 vs A flips H->D; default S17 stays H', () => {
   assert.equal(getCorrectAction([c(5), c(6)], c('A'), S17), 'H');
   assert.equal(getCorrectAction([c(5), c(6)], c('A'), H17), 'D');
   assert.equal(getCorrectAction([c(8), c(8)], c('A'), H17), 'Rh'); // 8,8 vs A: P -> surrender under H17
+});
+
+// ---- Cell identity: the heatmap/SRS key for a situation (#5) ----
+test('cellId keys the chart cell a hand lands in — one oracle, no second resolver', () => {
+  assert.equal(cellId([c(10), c(6)], c(10)), 'hard-16-10', 'hard total vs ten');
+  assert.equal(cellId([c('A'), c(7)], c(3)), 'soft-7-3', 'soft keyed by the non-ace card');
+  assert.equal(cellId([c(8), c(8)], c('A')), 'pair-8-11', 'pairs beat soft/hard; ace column is 11');
+  assert.equal(cellId([c('A'), c('A')], c(6)), 'pair-11-6', 'A,A is the ace pair, not soft 12');
+
+  // 17..21 share one chart row, so they must share one cell (and <8 clamps up to the 8 row).
+  assert.equal(cellId([c(10), c(9)], c(2)), 'hard-17-2', '19 folds into the 17+ row');
+  assert.equal(cellId([c(2), c(2), c(3)], c(5)), 'hard-8-5', '7 clamps up to the 8 row');
+
+  // A three-card hand is no longer a pair or a fresh double — it keys the hard row it totals to.
+  assert.equal(cellId([c(8), c(8), c(5)], c(10)), 'hard-17-10', 'split-out pair keys by total');
+});
+
+test('cells() enumerates exactly the chart grid the heatmap renders', () => {
+  const all = cells();
+  assert.equal(all.length, (10 + 8 + 10) * 10, 'hard 8-17 + soft 2-9 + pairs 2-11, each vs 10 upcards');
+  assert.equal(new Set(all.map((x) => x.id)).size, all.length, 'ids are unique');
+  // Every enumerated cell must round-trip: its id is what cellId() produces for a real hand there.
+  const sample = all.find((x) => x.id === 'pair-11-11');
+  assert.deepEqual({ type: sample.type, key: sample.key, up: sample.up }, { type: 'pair', key: 11, up: 11 });
+  assert.equal(sample.action, 'P', 'enumerated cells carry the chart action for the reference view');
 });

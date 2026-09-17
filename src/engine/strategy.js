@@ -38,3 +38,34 @@ export function getCorrectAction(hand, upcard, rules = {}) {
 export function forGrading(action) {
   return action === 'Ds' ? 'D' : action === 'Rh' ? 'R' : action;
 }
+
+// ── Cell identity (#5): the heatmap / SRS key for a situation ─────────────────────────────
+/** Dealer upcard values in column order (11 = Ace). */
+export const UPCARDS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+/**
+ * The chart cell a hand lands in: { type, key, up }. Resolved by the same pair -> soft -> hard
+ * walk as grading, so there is no second resolver to drift. Hard keys clamp to the chart's rows
+ * (8..17): 17..21 share one row, and anything under 8 folds into the 8 row.
+ */
+export function cellFor(hand, upcard) {
+  const { type, key } = base(hand, col(upcard));
+  return { type, key: type === 'hard' ? Math.min(17, Math.max(8, key)) : key, up: upcard.value };
+}
+
+/** Stable string id for a cell, e.g. 'hard-16-10' / 'soft-7-3' / 'pair-11-6'. */
+export const cellId = (hand, upcard) => {
+  const { type, key, up } = cellFor(hand, upcard);
+  return `${type}-${key}-${up}`;
+};
+
+/** Every cell of the chart grid with its S17 action — the source rows for the heatmap /
+ *  reference view (#5 F8). Rule deltas are not applied; v1 exposes S17 only. */
+export function cells() {
+  const out = [];
+  for (const [type, table] of [['hard', HARD], ['soft', SOFT], ['pair', PAIR]])
+    for (const key of Object.keys(table).map(Number))
+      for (const up of UPCARDS)
+        out.push({ id: `${type}-${key}-${up}`, type, key, up, action: table[key][col({ value: up })] });
+  return out;
+}

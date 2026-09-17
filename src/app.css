@@ -310,3 +310,35 @@ code {
   --push: #f1c40f;
   --btn: var(--accent);
 }
+
+/* ── Progress + reference-chart tokens (#5). Skin still deferred to the design canvas. ── */
+:root {
+  --panel: var(--bg);
+  --r-sm: 0.4rem;
+  --r-md: 0.6rem;
+  --r-lg: 1rem;
+
+  /* Grading pair (semantic); --win/--lose above stay money-outcome colours. */
+  --good: #2e9e5b;
+  --bad: #d2493a;
+  --cell-untouched: #e9e8ec;
+
+  /* Reference-chart action colours (F8 study view) */
+  --act-hit: #f3b6ad;
+  --act-stand: #a9dcc0;
+  --act-double: #ffe08a;
+  --act-split: #bfd4ff;
+  --act-surrender: #d9d2e9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --panel: #1f2028;
+    --cell-untouched: #33343d;
+    --act-hit: #7c3f39;
+    --act-stand: #2f6a4a;
+    --act-double: #7a6526;
+    --act-split: #3a4a76;
+    --act-surrender: #4a4360;
+  }
+}

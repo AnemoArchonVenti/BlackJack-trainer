@@ -39,3 +39,20 @@ export function legalMoves(hand, rules = {}) {
   }
   return moves;
 }
+
+const card = (rank) => ({ rank, value: rank === 'A' ? 11 : rank });
+
+/**
+ * handFor(cell) -> { hand, upcard }: a representative two-card hand for a chart cell, the
+ * inverse of strategy.js `cellFor`. Drives the heatmap's click-to-drill (#5 F7) and the
+ * deviation flashcards (#7), which pose a cell as a dealt situation.
+ * Hard rows must avoid aces and pairs, or the hand would key a soft/pair cell instead.
+ */
+export function handFor({ type, key, up }) {
+  const upcard = card(up === 11 ? 'A' : up);
+  if (type === 'pair') return { hand: [card(key === 11 ? 'A' : key), card(key === 11 ? 'A' : key)], upcard };
+  if (type === 'soft') return { hand: [card('A'), card(key)], upcard };
+  // hard: 8..11 pair with a 2, 12..17 with a 10 — neither partner ever matches the other card.
+  const partner = key >= 12 ? 10 : 2;
+  return { hand: [card(key - partner), card(partner)], upcard };
+}

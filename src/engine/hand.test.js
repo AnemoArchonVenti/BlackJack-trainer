@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { value, isSoft, isPair, legalMoves } from './hand.js';
+import { value, isSoft, isPair, legalMoves, handFor } from './hand.js';
+import { cellId, cells } from './strategy.js';
 
 // Card builder: rank 2..10 or 'A'; tens all value 10, A value 11 (SPEC §3 Card type).
 const c = (rank) => ({ rank, value: rank === 'A' ? 11 : rank });
@@ -40,4 +41,23 @@ test('legalMoves: double/split/surrender only on a fresh 2-card hand', () => {
   assert.deepEqual(legalMoves([c(8), c(8)], rules), ['H', 'S', 'D', 'P', 'R']);
   assert.deepEqual(legalMoves([c(10), c(6), c(2)], rules), ['H', 'S']); // after a hit
   assert.deepEqual(legalMoves([c(10), c(6)], { surrender: false }), ['H', 'S', 'D']);
+});
+
+test('handFor() builds a representative hand for a chart cell (heatmap click-to-drill, #5)', () => {
+  // Round-trip property: every enumerated cell must produce a hand that grades back to that cell.
+  for (const cell of cells()) {
+    const { hand, upcard } = handFor(cell);
+    assert.equal(cellId(hand, upcard), cell.id, `${cell.id} round-trips`);
+  }
+
+  // Spot-check the shapes a player would expect to be dealt.
+  assert.deepEqual(handFor({ type: 'soft', key: 7, up: 3 }).hand.map((c) => c.rank), ['A', 7]);
+  assert.deepEqual(handFor({ type: 'pair', key: 11, up: 6 }).hand.map((c) => c.rank), ['A', 'A']);
+  assert.equal(handFor({ type: 'hard', key: 16, up: 10 }).upcard.rank, 10);
+  assert.equal(handFor({ type: 'hard', key: 16, up: 11 }).upcard.rank, 'A', 'column 11 is the ace');
+
+  const hard = handFor({ type: 'hard', key: 12, up: 4 }).hand;
+  assert.equal(value(hard), 12);
+  assert.equal(isPair(hard), false, 'a hard-total drill must not deal a splittable pair');
+  assert.equal(isSoft(hard), false, 'a hard-total drill must not deal an ace');
 });

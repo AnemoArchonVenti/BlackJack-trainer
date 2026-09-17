@@ -6,8 +6,11 @@
   import HandView from './HandView.svelte';
   import ChipStack from './ChipStack.svelte';
   import Review from './Review.svelte';
+  import { session, gradeRound, persist } from './session.svelte.js';
+  import CellDrill from './CellDrill.svelte';
 
-  const t = createTable({ shoe: createShoe({ seed: Date.now() }), bankroll: 1000 });
+  // Bankroll is the persisted one (#5): the table owns it during a round, the session owns it across reloads.
+  const t = createTable({ shoe: createShoe({ seed: Date.now() }), bankroll: session.bankroll });
   const ACTIONS = { H: 'Hit', S: 'Stand', D: 'Double', P: 'Split', R: 'Surrender' };
 
   // The engine mutates a plain object in place; Svelte tracks by identity, so render from a
@@ -16,14 +19,26 @@
   let moves = $state([]);
   let bankroll = $state(t.bankroll);
   let lastBet = $state(0);
+  let drillCell = $state(null); // a review miss clicked through to a targeted drill (#5)
   const phase = $derived(round ? round.phase : 'betting');
 
   function sync() {
     round = t.round ? JSON.parse(JSON.stringify(t.round)) : null;
     moves = t.legalMoves();
     bankroll = t.bankroll;
+    session.bankroll = t.bankroll;
   }
-  const act = (fn) => { fn(); sync(); };
+  // Every settled round feeds its decisions to Leitner + the heatmap, then saves (#5).
+  let gradedRound = null;
+  const act = (fn) => {
+    fn();
+    sync();
+    if (t.round?.phase === 'done' && gradedRound !== t.round) {
+      gradedRound = t.round;
+      gradeRound(t.round.decisions);
+      persist();
+    }
+  };
   const deal = (bet) => { lastBet = bet; act(() => t.deal(bet)); };
   const move = (code) => act(() => ({ H: t.hit, S: t.stand, D: t.double, P: t.split, R: t.surrender })[code]());
   const canRebet = $derived(phase === 'done' && lastBet > 0 && lastBet <= bankroll);
@@ -75,7 +90,11 @@
 </div>
 
 {#if phase === 'done' && round?.decisions.length}
-  <Review decisions={round.decisions} />
+  <Review decisions={round.decisions} onCell={(c) => (drillCell = c)} />
+{/if}
+
+{#if drillCell}
+  <CellDrill cell={drillCell} onClose={() => (drillCell = null)} />
 {/if}
 </div>
 
