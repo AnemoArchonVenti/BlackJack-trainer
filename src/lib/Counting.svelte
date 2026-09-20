@@ -2,6 +2,10 @@
   // Mode 2: isolated counting drills (SPEC §5.2, research §2d). Three drills that build counting
   // speed before it has to happen at the table. All grading comes from engine/drills.js, which
   // grades against the shoe's ground truth — the UI never counts anything itself.
+  //
+  // Editorial skin (DESIGN-SPEC §5.9): the tab bar becomes the nav's underline, the panel loses
+  // its border for a top ink rule, and the drill's live number — cards left, elapsed, the true
+  // count you type — is set big in the serif, because that number is the drill.
   import {
     createTagDrill, createCountdownDrill, createTrueCountDrill,
     COUNTDOWN_TARGET_MS, COUNTDOWN_STRETCH_MS, CLEAN_RUNS_TO_PASS,
@@ -99,6 +103,8 @@
 <svelte:window onkeydown={onkey} />
 
 <section class="counting">
+  <h1>Counting</h1>
+
   <nav class="tabs" aria-label="Counting drills">
     {#each DRILLS as [id, label] (id)}
       <button class:on={drill === id} onclick={() => (drill = id)}>{label}</button>
@@ -109,16 +115,18 @@
     <div class="panel">
       <p class="lead">Call the Hi-Lo tag as fast as you can. 2–6 are +1, 7–9 are 0, tens and aces are −1.</p>
       <div class="stage">
-        {#if tag.card}
-          <Card rank={tag.card.rank} suit={suit()} />
-        {:else}
-          <button class="primary" onclick={tagNext}>Start</button>
-        {/if}
+        <div class="inner">
+          {#if tag.card}
+            <Card rank={tag.card.rank} suit={suit()} />
+          {:else}
+            <button class="primary" onclick={tagNext}>Start</button>
+          {/if}
+        </div>
       </div>
       <div class="moves">
-        <button onclick={() => tagAnswer(1)} disabled={!tag.card}>+1 <kbd>+</kbd></button>
-        <button onclick={() => tagAnswer(0)} disabled={!tag.card}>0 <kbd>0</kbd></button>
-        <button onclick={() => tagAnswer(-1)} disabled={!tag.card}>−1 <kbd>−</kbd></button>
+        <button class="action" onclick={() => tagAnswer(1)} disabled={!tag.card}>+1 <kbd>+</kbd></button>
+        <button class="action" onclick={() => tagAnswer(0)} disabled={!tag.card}>0 <kbd>0</kbd></button>
+        <button class="action" onclick={() => tagAnswer(-1)} disabled={!tag.card}>−1 <kbd>−</kbd></button>
       </div>
       <p class="verdict" aria-live="polite">
         {#if tag.feedback}
@@ -137,22 +145,26 @@
         {CLEAN_RUNS_TO_PASS} clean runs in a row to pass.
       </p>
       <div class="stage">
-        {#if !cd.drill}
-          <button class="primary" onclick={cdStart}>Start a deck</button>
-        {:else if cd.left > 0}
-          {#if cd.card}<Card rank={cd.card.rank} suit={suit()} />{/if}
-          <button class="primary" onclick={cdFlip}>{cd.card ? 'Next' : 'Flip'} <kbd>space</kbd></button>
-        {:else if !cd.result}
-          <label>
-            Final running count
-            <input type="number" bind:value={cd.called} />
-          </label>
-          <button class="primary" onclick={cdFinish}>Grade — {secs(cd.elapsed)}</button>
-        {:else}
-          <button class="primary" onclick={cdStart}>Run it again</button>
-        {/if}
+        <div class="inner">
+          {#if !cd.drill}
+            <button class="primary" onclick={cdStart}>Start a deck</button>
+          {:else if cd.left > 0}
+            {#if cd.card}<Card rank={cd.card.rank} suit={suit()} />{/if}
+            <p class="readout"><b>{cd.left}</b> <span class="unit">cards left</span></p>
+            <button class="primary" onclick={cdFlip}>{cd.card ? 'Next' : 'Flip'} <kbd>space</kbd></button>
+          {:else if !cd.result}
+            <p class="readout"><b>{secs(cd.elapsed)}</b> <span class="unit">elapsed</span></p>
+            <label>
+              Final running count
+              <input type="number" bind:value={cd.called} />
+            </label>
+            <button class="primary" onclick={cdFinish}>Grade this run</button>
+          {:else}
+            <p class="readout"><b>{secs(cd.result.elapsedMs)}</b> <span class="unit">elapsed</span></p>
+            <button class="primary" onclick={cdStart}>Run it again</button>
+          {/if}
+        </div>
       </div>
-      <p class="score">{cd.drill && cd.left > 0 ? `${cd.left} cards left` : ''}</p>
       <p class="verdict" aria-live="polite">
         {#if cd.result}
           <span class:bad={!cd.result.clean}>
@@ -168,24 +180,26 @@
   {:else}
     <div class="panel">
       <p class="lead">Divide the running count by the decks remaining, then round to the nearest whole true count.</p>
-      <div class="stage tcq">
-        {#if tc.question}
-          <p class="question">
-            Running count <b>{tc.question.runningCount > 0 ? '+' : ''}{tc.question.runningCount}</b>,
-            <b>{tc.question.decksRemaining}</b> decks remaining
-          </p>
-          <label>
-            True count
-            <input type="number" bind:value={tc.answer} />
-          </label>
-          {#if tc.result}
-            <button class="primary" onclick={tcNext}>Next <kbd>enter</kbd></button>
+      <div class="stage">
+        <div class="inner tcq">
+          {#if tc.question}
+            <p class="question">
+              Running count <b>{tc.question.runningCount > 0 ? '+' : ''}{tc.question.runningCount}</b>,
+              <b>{tc.question.decksRemaining}</b> decks remaining
+            </p>
+            <label>
+              True count
+              <input type="number" bind:value={tc.answer} />
+            </label>
+            {#if tc.result}
+              <button class="primary" onclick={tcNext}>Next <kbd>enter</kbd></button>
+            {:else}
+              <button class="primary" onclick={tcSubmit}>Check <kbd>enter</kbd></button>
+            {/if}
           {:else}
-            <button class="primary" onclick={tcSubmit}>Check <kbd>enter</kbd></button>
+            <button class="primary" onclick={tcNext}>Start</button>
           {/if}
-        {:else}
-          <button class="primary" onclick={tcNext}>Start</button>
-        {/if}
+        </div>
       </div>
       <p class="verdict" aria-live="polite">
         {#if tc.result}
@@ -200,36 +214,80 @@
 </section>
 
 <style>
-  .counting { max-width: 44rem; margin: 1.5rem auto; padding: 0 1rem; display: flex; flex-direction: column; gap: 1rem; }
-  .tabs { display: flex; gap: 0.3rem; justify-content: center; flex-wrap: wrap; }
-  .tabs button, .moves button, .primary {
-    padding: 0.4rem 0.9rem; border: 1px solid var(--border); background: none; color: inherit;
-    border-radius: var(--r-sm); cursor: pointer; font: inherit; font-size: 0.85rem;
+  .counting {
+    max-width: 46rem; margin: 0 auto; padding: 40px var(--pad) 48px;
+    display: flex; flex-direction: column; gap: var(--s-4); text-align: left;
   }
-  .tabs button.on { background: var(--accent-bg); border-color: var(--accent-border); color: var(--text-h); }
+  h1 { margin: 0; font-size: 40px; font-weight: 500; letter-spacing: -0.02em; }
+
+  /* The nav's underline, reused as a tab bar — no pills anywhere in the app. */
+  .tabs { display: flex; gap: var(--s-4); }
+  .tabs button {
+    padding: 0 0 6px; border: none; border-bottom: 2px solid transparent; background: none;
+    color: var(--text); font: inherit; font-size: 15px; cursor: pointer;
+  }
+  .tabs button:hover { color: var(--text-h); }
+  .tabs button.on { color: var(--text-h); font-weight: 500; border-bottom-color: var(--accent); }
+
   .panel {
-    border: 1px solid var(--border); border-radius: var(--r-lg); padding: 1.2rem;
-    display: flex; flex-direction: column; gap: 0.8rem; align-items: center; background: var(--panel);
+    display: flex; flex-direction: column; gap: var(--s-3); align-items: flex-start;
+    border-top: 1px solid var(--rule); padding-top: var(--s-4);
   }
-  .lead { font-size: 0.85rem; text-align: center; max-width: 32rem; }
-  .stage {
-    min-height: 6rem; display: flex; gap: 1rem; align-items: center; justify-content: center;
-    flex-wrap: wrap; padding: 1rem 1.2rem; border-radius: var(--r-md); width: 100%; box-sizing: border-box;
-    background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-edge));
+  .lead { font-size: 17px; line-height: 1.55; color: var(--text); max-width: 34rem; text-wrap: pretty; }
+
+  /* The felt, same flat panel and hairline frame as the table. */
+  .stage { display: flex; width: 100%; padding: 12px; border-radius: var(--r-lg); background: var(--felt); }
+  .inner {
+    flex: 1; box-sizing: border-box; min-height: 12rem;
+    border: 1px solid var(--felt-inset); border-radius: var(--r-md); padding: var(--s-4);
+    display: flex; gap: var(--s-4); align-items: center; justify-content: center; flex-wrap: wrap;
   }
-  .stage.tcq { flex-direction: column; gap: 0.7rem; }
-  .question { color: var(--on-felt-strong); font-size: 1.05rem; margin: 0; }
-  .question b { font-size: 1.2rem; }
-  label { color: var(--on-felt-strong); font-size: 0.85rem; display: flex; gap: 0.4rem; align-items: center; }
+  .inner.tcq { flex-direction: column; gap: var(--s-3); }
+
+  .readout { color: var(--on-felt); display: flex; align-items: baseline; gap: 8px; }
+  .readout b {
+    font-family: var(--heading); font-size: 44px; font-weight: 500; line-height: 1;
+    color: var(--on-felt-strong); font-variant-numeric: tabular-nums;
+  }
+  .unit { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  .question { font-family: var(--heading); font-size: 20px; color: var(--on-felt); }
+  .question b { font-size: 30px; font-weight: 500; color: var(--on-felt-strong); }
+
+  label {
+    color: var(--on-felt-strong); font-size: 14px;
+    display: flex; gap: var(--s-2); align-items: center;
+  }
   input {
-    width: 4.5rem; padding: 0.35rem 0.5rem; border-radius: var(--r-sm);
-    border: 1px solid var(--card-border); font: inherit; font-size: 0.9rem;
+    width: 5rem; padding: 4px 8px; border-radius: var(--r-sm);
+    border: 1px solid var(--card-border); background: var(--card-bg); color: var(--card-ink);
+    font-family: var(--heading); font-size: 28px; font-weight: 500;
+    font-variant-numeric: tabular-nums; text-align: center;
   }
-  .primary { background: var(--btn); color: var(--on-btn); border-color: transparent; font-weight: 600; }
-  .moves { display: flex; gap: 0.5rem; }
-  .moves button:disabled { opacity: 0.4; cursor: not-allowed; }
-  kbd { font: inherit; font-size: 0.7rem; opacity: 0.7; }
-  .verdict { min-height: 1.4rem; margin: 0; font-weight: 600; color: var(--good); }
-  .verdict .bad { color: var(--bad); }
-  .score { margin: 0; font-size: 0.8rem; opacity: 0.8; }
+
+  .moves { display: flex; gap: 12px; }
+  button { font: inherit; font-size: 16px; font-weight: 500; cursor: pointer; }
+  .action {
+    min-width: 6rem; height: 56px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    border: 1px solid var(--text-h); border-radius: var(--r-sm); background: none; color: var(--text-h);
+  }
+  .action:hover:not(:disabled) { background: var(--hover); }
+  .action:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* On the felt the page's green primary would vanish, so it inverts, as the chip stack does. */
+  .primary {
+    height: 48px; padding: 0 20px; display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--on-felt-strong); border-radius: var(--r-sm);
+    background: var(--on-felt-strong); color: var(--felt);
+  }
+  kbd { font-family: var(--mono); font-size: 12px; font-weight: 400; opacity: 0.75; }
+  .action kbd { color: var(--text); opacity: 1; }
+
+  .verdict { min-height: 1.4rem; font-size: 16px; font-weight: 500; color: var(--good); }
+  .verdict .bad { color: var(--danger); }
+  .score { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+  @media (max-width: 560px) {
+    .moves { width: 100%; }
+    .action { flex: 1; min-width: 0; height: 48px; }
+  }
 </style>

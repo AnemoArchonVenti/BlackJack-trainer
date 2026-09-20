@@ -2,6 +2,10 @@
   // Mode 4: the integration table (SPEC §5.4). Everything at once — you keep the count yourself,
   // size the bet by it, and are expected to make the index plays. Nothing is shown to you: no
   // running count, no true count, no per-decision verdict. The shoe grades you at the end.
+  //
+  // Editorial skin (DESIGN-SPEC §5.4/§5.9): the same table as Mode 1 — money line above the felt,
+  // flat green panel, actions below it — and the end-of-shoe report is a hairline ledger led by
+  // one big figure.
   import { createShoe } from '../engine/shoe.js';
   import { createTable } from '../engine/round.js';
   import { cellId } from '../engine/strategy.js';
@@ -127,18 +131,25 @@
 <svelte:window onkeydown={onkey} onpointerdown={() => (skip = true)} />
 
 <section class="integration">
+  <h1>Integration</h1>
+
   {#if report}
     <div class="report" aria-live="polite">
-      <h2>End of shoe</h2>
-      <p class="overall">{pct(report.overall)}<span>overall across {report.rounds} rounds</span></p>
+      <div class="head">
+        <h2>End of shoe</h2>
+        <span class="rounds">{report.rounds} rounds</span>
+      </div>
+      <p class="overall"><b>{pct(report.overall)}</b> <span>overall across {report.rounds} rounds</span></p>
       <dl>
         {#each AXES as [key, label, hint] (key)}
           <div>
-            <dt>{label}</dt>
+            <dt>
+              {label}
+              <span class="hint">{hint}</span>
+            </dt>
             <dd>
               {pct(report[key].accuracy)}
               <span class="of">{report[key].total ? `${report[key].correct}/${report[key].total}` : 'none came up'}</span>
-              <span class="hint">{hint}</span>
             </dd>
           </div>
         {/each}
@@ -150,7 +161,7 @@
       {:else}
         <p class="fed clean">Clean shoe — nothing to send back to the queue.</p>
       {/if}
-      <button class="primary" onclick={nextShoe}>New shoe</button>
+      <button class="action primary" onclick={nextShoe}>New shoe</button>
     </div>
   {:else}
     <p class="lead">
@@ -158,52 +169,62 @@
       graded when the shoe hits the cut card.
     </p>
 
+    <div class="meta">
+      <span class="item">Bankroll <b>${bankroll}</b></span>
+      <span class="rounds">{history.length} rounds this shoe</span>
+    </div>
+
     <div class="felt" class:skip>
-      <header>
-        <span>Bankroll <b>${bankroll}</b></span>
-        <span class="rounds">{history.length} rounds this shoe</span>
-      </header>
-
-      {#if round}
-        <HandView hand={round.dealer} label="Dealer" hideHole={phase === 'player'} />
-        <div class="spots">
-          {#each round.hands as h, i (i)}
-            <HandView
-              hand={h.cards}
-              label={round.hands.length > 1 ? `Hand ${i + 1} ($${h.bet})` : `You ($${h.bet})`}
-              outcome={phase === 'done' ? h.outcome : round.active === i && phase === 'player' ? 'active' : ''}
-            />
-          {/each}
-        </div>
-      {/if}
-
-      <footer>
-        {#if phase === 'player'}
-          <div class="moves">
-            {#each moves as code (code)}
-              <button onclick={() => move(code)}>{ACTIONS[code]} <kbd>{code}</kbd></button>
-            {/each}
-          </div>
-        {:else}
+      <div class="inner">
+        <div class="zone">
           {#if round}
-            <p class="result" class:win={round.net > 0} class:lose={round.net < 0}>
-              {round.net > 0 ? `Won $${round.net}` : round.net < 0 ? `Lost $${-round.net}` : 'Push'}
-            </p>
+            <HandView hand={round.dealer} role="dealer" hideHole={phase === 'player'} />
           {/if}
-          <div class="entry">
-            <label>
-              Your running count
-              <input type="number" bind:value={called} />
-            </label>
-            <label>
-              Bet
-              <input type="number" min="1" max={MAX_SPREAD} bind:value={units} />
+        </div>
+
+        <div class="zone bottom">
+          {#if round}
+            <div class="spots">
+              {#each round.hands as h, i (i)}
+                <HandView
+                  hand={h.cards}
+                  index={i}
+                  bet={h.bet}
+                  split={round.hands.length > 1}
+                  active={round.active === i && phase === 'player'}
+                  outcome={phase === 'done' ? h.outcome : ''}
+                  net={phase === 'done' && round.hands.length === 1 ? round.net : null}
+                />
+              {/each}
+            </div>
+          {/if}
+
+          {#if phase !== 'player'}
+            <div class="entry">
+              <label>
+                <span class="unit">Your running count</span>
+                <input type="number" bind:value={called} />
+              </label>
+              <label>
+                <span class="unit">Bet in units</span>
+                <input type="number" min="1" max={MAX_SPREAD} bind:value={units} />
+              </label>
               <span class="money">× ${UNIT} = ${units * UNIT}</span>
-            </label>
-            <button class="primary" onclick={deal}>Deal <kbd>enter</kbd></button>
-          </div>
-        {/if}
-      </footer>
+              <button class="deal" onclick={deal}>Deal <kbd>enter</kbd></button>
+            </div>
+          {/if}
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      {#if phase === 'player'}
+        {#each moves as code (code)}
+          <button class="action" onclick={() => move(code)}>
+            {ACTIONS[code]} <span class="key" aria-hidden="true">{code}</span>
+          </button>
+        {/each}
+      {/if}
     </div>
 
     <details class="ramp">
@@ -223,57 +244,99 @@
 </section>
 
 <style>
-  .integration { max-width: 46rem; margin: 1.5rem auto; padding: 0 1rem; display: flex; flex-direction: column; gap: 1rem; }
-  .lead { font-size: 0.85rem; text-align: center; }
-  .felt {
-    padding: 1.4rem; min-height: 22rem; display: flex; flex-direction: column; gap: 1.2rem;
-    align-items: center; justify-content: space-between;
-    background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-edge));
-    border: 6px solid var(--felt-edge); border-radius: var(--r-lg);
+  .integration {
+    max-width: 56rem; margin: 0 auto; padding: 40px var(--pad) 48px;
+    display: flex; flex-direction: column; gap: var(--s-4); text-align: left;
   }
+  h1 { margin: 0; font-size: 40px; font-weight: 500; letter-spacing: -0.02em; }
+  .lead { font-size: 17px; line-height: 1.55; color: var(--text); max-width: 34rem; text-wrap: pretty; }
+
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); }
+  .item { font-size: 14px; color: var(--text); }
+  .item b {
+    font-family: var(--heading); font-size: 24px; font-weight: 500; margin-left: 6px;
+    color: var(--text-h); font-variant-numeric: tabular-nums;
+  }
+  .rounds { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+  .felt { display: flex; padding: 12px; border-radius: var(--r-lg); background: var(--felt); min-height: 26rem; }
+  .inner {
+    flex: 1; box-sizing: border-box;
+    border: 1px solid var(--felt-inset); border-radius: var(--r-md); padding: var(--s-4) var(--s-4);
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: var(--s-4);
+  }
+  .zone { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); }
+  .bottom { margin-top: auto; }
+  .spots { display: flex; gap: var(--s-5); flex-wrap: wrap; justify-content: center; }
   /* Any input resolves the deal choreography immediately (#10 F5). */
   .felt.skip :global(*) { animation: none !important; transition: none !important; }
 
-  header { align-self: stretch; display: flex; justify-content: space-between; color: var(--on-felt); font-size: 0.85rem; }
-  header b { color: var(--on-felt-strong); }
-  .rounds { opacity: 0.8; }
-  .spots { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
-  footer { display: flex; flex-direction: column; gap: 0.7rem; align-items: center; }
-  .moves { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
-  .moves button, .primary {
-    padding: 0.5rem 0.9rem; border: none; border-radius: var(--r-sm);
-    background: var(--btn); color: var(--on-btn); font-weight: 600; cursor: pointer; font-size: 0.85rem;
-  }
-  kbd { font: inherit; font-size: 0.7rem; opacity: 0.7; }
-  .entry { display: flex; gap: 0.8rem; align-items: flex-end; flex-wrap: wrap; justify-content: center; }
-  label { display: flex; flex-direction: column; gap: 0.2rem; color: var(--on-felt); font-size: 0.75rem; }
+  .entry { display: flex; gap: var(--s-3); align-items: flex-end; flex-wrap: wrap; justify-content: center; }
+  label { display: flex; flex-direction: column; gap: var(--s-1); color: var(--on-felt-strong); }
+  .unit { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-felt); }
   input {
-    width: 5rem; padding: 0.35rem 0.5rem; border-radius: var(--r-sm);
-    border: 1px solid var(--card-border); font: inherit; font-size: 0.9rem;
+    width: 6rem; padding: 4px 8px; border-radius: var(--r-sm);
+    border: 1px solid var(--card-border); background: var(--card-bg); color: var(--card-ink);
+    font-family: var(--heading); font-size: 24px; font-weight: 500;
+    font-variant-numeric: tabular-nums; text-align: center;
   }
-  .money { color: var(--on-felt); font-size: 0.72rem; }
-  .result { font-size: 1.1rem; font-weight: 700; color: var(--push); margin: 0; }
-  .result.win { color: var(--win); }
-  .result.lose { color: var(--lose); }
+  .money { font-family: var(--heading); font-size: 18px; color: var(--on-felt); padding-bottom: 6px; }
 
-  .report {
-    border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--panel);
-    padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 0.8rem; text-align: left;
+  .controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  button { font: inherit; font-size: 16px; font-weight: 500; cursor: pointer; }
+  .action {
+    height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px;
+    border: 1px solid var(--text-h); border-radius: var(--r-sm); background: none;
+    color: var(--text-h);
   }
-  .report h2 { margin: 0; font-size: 1.05rem; }
-  .overall { font-size: 2.4rem; font-weight: 700; color: var(--text-h); display: flex; align-items: baseline; gap: 0.6rem; }
-  .overall span { font-size: 0.8rem; font-weight: 400; color: var(--text); }
-  .report dl { margin: 0; display: grid; gap: 0.5rem; }
-  .report dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text); }
-  .report dd { margin: 0; font-weight: 700; color: var(--text-h); display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
-  .of { font-weight: 400; font-size: 0.8rem; color: var(--text); }
-  .hint { font-weight: 400; font-size: 0.75rem; opacity: 0.75; }
-  .fed { font-size: 0.85rem; }
+  .action:hover { background: var(--hover); }
+  .key { font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--text); }
+  .primary { background: var(--accent); border-color: var(--accent); color: var(--on-btn); padding: 0 24px; align-self: flex-start; }
+  /* On the felt the green primary would vanish, so Deal inverts, as the chip stack's does. */
+  .deal {
+    height: 48px; padding: 0 20px; display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--on-felt-strong); border-radius: var(--r-sm);
+    background: var(--on-felt-strong); color: var(--felt);
+  }
+  kbd { font-family: var(--mono); font-size: 12px; font-weight: 400; opacity: 0.75; }
+
+  /* ── End-of-shoe report: a ledger, led by one figure ── */
+  .report { display: flex; flex-direction: column; gap: var(--s-3); border-top: 1px solid var(--rule); padding-top: var(--s-3); }
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); }
+  .report h2 { margin: 0; font-size: 26px; font-weight: 500; }
+  .overall { display: flex; align-items: baseline; gap: var(--s-3); }
+  .overall b {
+    font-family: var(--heading); font-size: 48px; font-weight: 500; line-height: 1;
+    color: var(--text-h); font-variant-numeric: tabular-nums;
+  }
+  .overall span { font-size: 14px; color: var(--text); }
+  .report dl { margin: 0; border-top: 1px solid var(--border); }
+  .report dl div {
+    display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4);
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .report dt { font-size: 16px; font-weight: 500; color: var(--text-h); display: flex; flex-direction: column; gap: 2px; }
+  .report dd {
+    margin: 0; display: flex; align-items: baseline; gap: var(--s-2);
+    font-family: var(--heading); font-size: 24px; font-weight: 500; color: var(--text-h);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .of { font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--text); }
+  .hint { font-family: var(--sans); font-size: 14px; font-weight: 400; color: var(--text); }
+  .fed { font-size: 14px; color: var(--text); }
   .fed.clean { color: var(--good); }
-  .report .primary { align-self: flex-start; }
 
-  .ramp { font-size: 0.82rem; }
-  .ramp summary { cursor: pointer; font-weight: 600; color: var(--text-h); }
-  .ramp ul { list-style: none; padding: 0; margin: 0.5rem 0; display: flex; flex-direction: column; gap: 0.2rem; }
-  .ramp b { color: var(--text-h); min-width: 4.5rem; display: inline-block; }
+  /* ── Bet ramp ── */
+  .ramp { font-size: 14px; color: var(--text); border-top: 1px solid var(--border); padding-top: var(--s-3); }
+  .ramp summary { cursor: pointer; font-size: 16px; font-weight: 500; color: var(--text-h); }
+  .ramp p { margin-top: var(--s-2); line-height: 1.55; }
+  .ramp ul { list-style: none; padding: 0; margin: var(--s-2) 0; display: flex; flex-direction: column; gap: 4px; }
+  .ramp b { font-family: var(--heading); font-size: 16px; color: var(--text-h); min-width: 5rem; display: inline-block; }
+
+  @media (max-width: 560px) {
+    .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .action { height: 48px; }
+    .felt { min-height: 0; padding: 8px; }
+    .inner { padding: var(--s-3); }
+  }
 </style>

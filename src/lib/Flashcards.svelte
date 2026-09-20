@@ -3,6 +3,9 @@
   // the card HANDS you the true count, you name the action. Grading runs through the same
   // getDeviation -> getCorrectAction fallback the integration table will use, so there is one
   // answer key. Missed indices come back first, scheduled by the SRS (#5).
+  //
+  // Editorial skin (DESIGN-SPEC §5.9): the count you are given is the page's big figure, set
+  // above the felt where the table keeps its money line, and the card loses its box.
   import {
     DEVIATIONS, DEVIATION_CARD_IDS, INSURANCE_CARD_ID, INSURANCE_INDEX,
     getDeviation, deviationsAvailable, shouldInsure,
@@ -88,8 +91,13 @@
 <svelte:window onkeydown={onkey} />
 
 <section class="flashcards">
+  <h1>Deviations</h1>
+
   {#if !guard.available}
-    <p class="notice" role="status">{guard.notice}</p>
+    <div class="notice" role="status">
+      <span class="kicker">Not available</span>
+      <p>{guard.notice}</p>
+    </div>
   {:else}
     <p class="lead">
       The count is given to you — name the play. Illustrious 18 + Fab 4, Hi-Lo indices for a
@@ -98,27 +106,34 @@
 
     <div class="card">
       {#if !card}
-        <button class="primary" onclick={next}>Start</button>
+        <button class="action primary" onclick={next}>Start</button>
       {:else}
-        <p class="tc">True count <b>{tc(card.trueCount)}</b></p>
+        <div class="meta">
+          <span class="item">True count <b>{tc(card.trueCount)}</b></span>
+          {#if card.kind === 'insurance'}<span class="shoe">Insurance is offered</span>{/if}
+        </div>
+
+        <div class="stage">
+          <div class="inner">
+            {#if card.kind === 'insurance'}
+              <HandView hand={[{ rank: 'A', value: 11 }]} role="dealer" />
+            {:else}
+              <HandView hand={[card.upcard]} role="dealer" />
+              <HandView hand={card.hand} />
+            {/if}
+          </div>
+        </div>
 
         {#if card.kind === 'insurance'}
-          <div class="stage">
-            <HandView hand={[{ rank: 'A', value: 11 }]} label="Dealer shows" />
-          </div>
           <p class="prompt">Insurance is offered. Take it?</p>
-          <div class="moves">
-            <button onclick={() => pick(true)} disabled={!!answer}>Yes <kbd>Y</kbd></button>
-            <button onclick={() => pick(false)} disabled={!!answer}>No <kbd>N</kbd></button>
+          <div class="moves two">
+            <button class="action" onclick={() => pick(true)} disabled={!!answer}>Yes <kbd>Y</kbd></button>
+            <button class="action" onclick={() => pick(false)} disabled={!!answer}>No <kbd>N</kbd></button>
           </div>
         {:else}
-          <div class="stage">
-            <HandView hand={[card.upcard]} label="Dealer" />
-            <HandView hand={card.hand} label="You" />
-          </div>
           <div class="moves">
             {#each ['H', 'S', 'D', 'P', 'R'] as code (code)}
-              <button onclick={() => pick(code)} disabled={!!answer || (code === 'P' && card.entry.type !== 'pair')}>
+              <button class="action" onclick={() => pick(code)} disabled={!!answer || (code === 'P' && card.entry.type !== 'pair')}>
                 {ACTIONS[code]} <kbd>{code}</kbd>
               </button>
             {/each}
@@ -135,7 +150,7 @@
               {/if}
             </p>
             <p class="rule">{rule(card)}</p>
-            <button class="primary" onclick={next}>Next <kbd>enter</kbd></button>
+            <button class="action primary" onclick={next}>Next <kbd>enter</kbd></button>
           {/if}
         </div>
       {/if}
@@ -149,35 +164,67 @@
 </section>
 
 <style>
-  .flashcards { max-width: 40rem; margin: 1.5rem auto; padding: 0 1rem; display: flex; flex-direction: column; gap: 0.9rem; align-items: center; }
-  .lead { font-size: 0.85rem; text-align: center; max-width: 32rem; }
-  .notice {
-    border: 1px solid var(--accent-border); background: var(--accent-bg);
-    border-radius: var(--r-md); padding: 0.8rem 1rem; font-size: 0.9rem;
+  .flashcards {
+    max-width: 46rem; margin: 0 auto; padding: 40px var(--pad) 48px;
+    display: flex; flex-direction: column; gap: var(--s-4); text-align: left;
   }
+  h1 { margin: 0; font-size: 40px; font-weight: 500; letter-spacing: -0.02em; }
+  .lead { font-size: 17px; line-height: 1.55; color: var(--text); max-width: 34rem; text-wrap: pretty; }
+
+  /* A notice, not a callout box: the same top rule every section gets. */
+  .notice { border-top: 1px solid var(--rule); padding-top: var(--s-3); display: flex; flex-direction: column; gap: var(--s-2); }
+  .kicker {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .notice p { font-size: 16px; line-height: 1.55; color: var(--text); max-width: 34rem; }
+
   .card {
-    width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--r-lg);
-    background: var(--panel); padding: 1.2rem; display: flex; flex-direction: column;
-    gap: 0.8rem; align-items: center;
+    border-top: 1px solid var(--rule); padding-top: var(--s-4);
+    display: flex; flex-direction: column; gap: var(--s-3); align-items: flex-start;
   }
-  .tc { margin: 0; font-size: 0.9rem; }
-  .tc b { font-size: 1.3rem; color: var(--text-h); }
-  .stage {
-    display: flex; gap: 1.5rem; justify-content: center; padding: 1rem 1.2rem; width: 100%;
-    box-sizing: border-box; border-radius: var(--r-md);
-    background: radial-gradient(circle at 50% 30%, var(--felt), var(--felt-edge));
+
+  .meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-3); width: 100%; }
+  .item { font-size: 14px; color: var(--text); }
+  .item b {
+    font-family: var(--heading); font-size: 30px; font-weight: 500; margin-left: 6px;
+    color: var(--text-h); font-variant-numeric: tabular-nums;
   }
-  .prompt { margin: 0; font-size: 0.9rem; }
-  .moves { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
-  .moves button, .primary {
-    padding: 0.45rem 0.8rem; border: none; border-radius: var(--r-sm);
-    background: var(--btn); color: var(--on-btn); font-weight: 600; cursor: pointer; font-size: 0.85rem;
+  .shoe { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+  .stage { display: flex; width: 100%; padding: 12px; border-radius: var(--r-lg); background: var(--felt); }
+  .inner {
+    flex: 1; box-sizing: border-box;
+    border: 1px solid var(--felt-inset); border-radius: var(--r-md); padding: var(--s-5) var(--s-4);
+    display: flex; gap: var(--s-5); align-items: center; justify-content: center; flex-wrap: wrap;
   }
-  .moves button:disabled { opacity: 0.35; cursor: not-allowed; }
-  kbd { font: inherit; font-size: 0.7rem; opacity: 0.7; }
-  .verdict { display: flex; flex-direction: column; gap: 0.4rem; align-items: center; min-height: 2rem; }
-  .mark { margin: 0; font-weight: 700; color: var(--good); }
-  .mark.bad { color: var(--bad); }
-  .rule { margin: 0; font-size: 0.82rem; text-align: center; opacity: 0.85; }
-  .score { margin: 0; font-size: 0.78rem; opacity: 0.8; }
+
+  .prompt { font-size: 16px; color: var(--text-h); }
+  .moves { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; width: 100%; }
+  .moves.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 22rem; }
+
+  button { font: inherit; font-size: 16px; font-weight: 500; cursor: pointer; }
+  .action {
+    height: 56px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    border: 1px solid var(--text-h); border-radius: var(--r-sm); background: none; color: var(--text-h);
+  }
+  .action:hover:not(:disabled) { background: var(--hover); }
+  .action:disabled { opacity: 0.35; cursor: not-allowed; }
+  .primary {
+    background: var(--accent); border-color: var(--accent); color: var(--on-btn);
+    padding: 0 24px; align-self: flex-start;
+  }
+  kbd { font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--text); }
+  .primary kbd { color: currentColor; opacity: 0.75; }
+
+  .verdict { display: flex; flex-direction: column; gap: var(--s-2); align-items: flex-start; min-height: 2rem; }
+  .mark { font-size: 16px; font-weight: 500; color: var(--good); }
+  .mark.bad { color: var(--danger); }
+  .rule { font-size: 14px; line-height: 1.55; color: var(--text); text-wrap: pretty; }
+  .score { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+  @media (max-width: 560px) {
+    .moves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .action { height: 48px; }
+  }
 </style>

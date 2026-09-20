@@ -52,24 +52,29 @@
 </div>
 
 <style>
-  .settings {
-    border-bottom: 1px solid var(--border); background: var(--panel);
-    padding: 0.8rem clamp(0.75rem, 3vw, 1.5rem);
-  }
+  /* Editorial skin (DESIGN-SPEC §5.9): a hairline strip on the page ground under the bar, with
+     its legends set as the mono kickers used everywhere else. */
+  .settings { border-bottom: 1px solid var(--border); background: var(--bg); }
   .row {
-    display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
-    max-width: 1120px; margin: 0 auto;
+    display: flex; gap: var(--s-5); align-items: center; flex-wrap: wrap;
+    max-width: var(--content); margin: 0 auto; padding: var(--s-3) var(--pad);
   }
-  fieldset { border: none; margin: 0; padding: 0; display: flex; gap: 0.7rem; align-items: center; }
+  fieldset { border: none; margin: 0; padding: 0; display: flex; gap: var(--s-3); align-items: center; }
   legend {
-    float: left; padding: 0 0.5rem 0 0; font-size: 0.72rem; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--text); font-weight: 600;
+    float: left; padding: 0 var(--s-2) 0 0;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text);
   }
-  label { display: flex; gap: 0.3rem; align-items: center; font-size: 0.85rem; }
+  label { display: flex; gap: 6px; align-items: center; font-size: 15px; color: var(--text-h); }
+  input { accent-color: var(--accent); }
   .close {
-    margin-left: auto; padding: 0.35rem 0.9rem; border: 1px solid var(--border);
-    border-radius: var(--r-sm); background: none; color: inherit; font: inherit;
-    font-size: 0.85rem; cursor: pointer;
+    margin-left: auto; padding: 8px 14px; border: 1px solid var(--border);
+    border-radius: var(--r-sm); background: none; color: var(--text-h); font: inherit;
+    font-size: 14px; cursor: pointer;
   }
-  .note { max-width: 1120px; margin: 0.5rem auto 0; font-size: 0.78rem; opacity: 0.85; }
+  .close:hover { background: var(--hover); }
+  .note {
+    max-width: var(--content); margin: 0 auto; padding: 0 var(--pad) var(--s-3);
+    font-size: 14px; color: var(--text);
+  }
 </style>
