@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Option B Editorial — Dashboard</title>
+</head>
+<body style="margin:0;background:#e8e4db;">
+<!-- Static reference mockup, 1440×900. Values here are the source of truth for pixel sizes. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#f4f1ea;color:#1c1a17}
+a{color:#1c1a17;text-decoration:none}a:hover{color:#1f5c3f}
+</style>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #f4f1ea; color: #1c1a17; font-family: 'IBM Plex Sans', system-ui, sans-serif;">
+
+  <header style="box-sizing: border-box; padding: 0 80px; height: 76px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #d9d3c7;">
+    <a href="Dashboard.html" style="font-family: 'Newsreader', Georgia, serif; font-style: italic; font-size: 28px; font-weight: 500; letter-spacing: -0.01em;">Twenty-One</a>
+    <nav aria-label="Modes" style="display: flex; gap: 32px; font-size: 15px;">
+      <a href="Dashboard.html" aria-current="page" style="padding: 26px 0; border-bottom: 2px solid #1f5c3f; color: #1c1a17; font-weight: 500;">Dashboard</a>
+      <a href="Play.html" style="padding: 26px 0; color: #5f5950;">Play</a>
+      <a href="Play.html" style="padding: 26px 0; color: #5f5950;">Counting</a>
+      <a href="Play.html" style="padding: 26px 0; color: #5f5950;">Deviations</a>
+      <a href="Play.html" style="padding: 26px 0; color: #5f5950;">Integration</a>
+      <a href="Play.html" style="padding: 26px 0; color: #5f5950;">Progress</a>
+    </nav>
+    <button style="padding: 8px 14px; border: 1px solid #d9d3c7; border-radius: 4px; background: none; color: #1c1a17; font: inherit; font-size: 14px; cursor: pointer;">Settings</button>
+  </header>
+
+  <main style="flex-grow: 1; box-sizing: border-box; padding: 64px 80px 48px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 32px; row-gap: 56px;">
+
+    <section style="grid-column: 1 / span 7; display: flex; flex-direction: column; gap: 22px;">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #1f5c3f;">Chapter one</span>
+      <h1 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 64px; line-height: 1.02; font-weight: 500; letter-spacing: -0.02em;">Start with basic strategy.</h1>
+      <p style="margin: 0; font-size: 19px; line-height: 1.55; color: #5f5950; max-width: 560px; text-wrap: pretty;">Play full hands at a real table. After each one you'll see every decision you made, the right play, and the reason behind it. Nothing is locked; this is simply the place to begin.</p>
+      <div style="display: flex; align-items: center; gap: 24px; margin-top: 8px;">
+        <a href="Play.html" style="padding: 16px 28px; border-radius: 4px; background: #1f5c3f; color: #ffffff; font-size: 16px; font-weight: 500;">Play a hand</a>
+        <a href="Play.html" style="font-size: 16px; color: #1c1a17; border-bottom: 1px solid #1c1a17; padding-bottom: 2px;">Read the chart first</a>
+      </div>
+    </section>
+
+    <aside style="grid-column: 9 / span 4; display: flex; flex-direction: column; gap: 0; border-top: 1px solid #1c1a17;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-size: 14px; color: #5f5950;">Strategy, last 50 decisions</span>
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 500;">—</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-size: 14px; color: #5f5950;">Best clean deck countdown</span>
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 500;">—</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-size: 14px; color: #5f5950;">Bankroll</span>
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 500;">$1,000</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-size: 14px; color: #5f5950;">Cells mastered</span>
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 500;">0 <span style="font-size: 16px; color: #5f5950;">of 340</span></span>
+      </div>
+    </aside>
+
+    <section aria-label="The path" style="grid-column: 1 / span 8; display: flex; flex-direction: column; border-top: 1px solid #1c1a17;">
+      <div style="display: grid; grid-template-columns: 72px 1fr 1fr; gap: 24px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 22px; color: #1f5c3f;">I.</span>
+        <span style="font-size: 17px; font-weight: 500;">Basic strategy <span style="margin-left: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #1f5c3f;">now</span></span>
+        <span style="font-size: 14px; color: #5f5950;">0 of 50 decisions graded · gate is 99% with nothing left in Learning</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 72px 1fr 1fr; gap: 24px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 22px; color: #5f5950;">II.</span>
+        <span style="font-size: 17px; font-weight: 500;">Card counting</span>
+        <span style="font-size: 14px; color: #5f5950;">a deck under 30 seconds, five clean runs in a row</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 72px 1fr 1fr; gap: 24px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 22px; color: #5f5950;">III.</span>
+        <span style="font-size: 17px; font-weight: 500;">Deviations</span>
+        <span style="font-size: 14px; color: #5f5950;">the Illustrious 18 and Fab 4, every index out of New and Learning</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 72px 1fr 1fr; gap: 24px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #d9d3c7;">
+        <span style="font-family: 'Newsreader', Georgia, serif; font-size: 22px; color: #5f5950;">IV.</span>
+        <span style="font-size: 17px; font-weight: 500;">The integration table</span>
+        <span style="font-size: 14px; color: #5f5950;">count it, bet it and deviate, all at once, graded per shoe</span>
+      </div>
+    </section>
+
+    <a href="Play.html" aria-label="Open the accuracy heatmap" style="grid-column: 9 / span 4; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 14px; color: #5f5950;">Your accuracy, cell by cell</span>
+      <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px;">
+        <div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div><div style="aspect-ratio: 1; background: #e6e1d6;"></div>
+      </div>
+      <span style="font-size: 15px; border-bottom: 1px solid #1c1a17; align-self: flex-start; padding-bottom: 2px;">Open the full chart</span>
+    </a>
+
+  </main>
+
+  <footer style="box-sizing: border-box; padding: 0 80px; height: 52px; display: flex; align-items: center; border-top: 1px solid #d9d3c7; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5f5950;">
+    6 decks · dealer stands on soft 17 · double after split · late surrender
+  </footer>
+</div>
+</body>
+</html>
