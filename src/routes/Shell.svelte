@@ -1,8 +1,12 @@
 <script>
   // The app shell (SPEC §11 F3): one page, hash routing, a persistent switcher listing every mode.
   // The free menu is never locked — gates guide, they do not gate (SPEC Q5=C).
-  // This replaces the minimal placeholder shell #3 stood up.
-  import { ROUTES, MODES, parseRoute, hrefFor } from './router.js';
+  //
+  // Editorial skin (DESIGN-SPEC §5.1): a 76px bar on the page ground, not a panel. The active
+  // mode is marked by a 2px green underline sitting on the bar's bottom hairline — no pill, no
+  // filled background anywhere in the nav. The shell no longer prints a route title; each route
+  // sets its own heading, so the page starts with the words that route wants to lead with.
+  import { MODES, parseRoute, hrefFor } from './router.js';
   import Dashboard from './Dashboard.svelte';
   import Settings from '../lib/Settings.svelte';
   import Table from '../lib/Table.svelte';
@@ -27,21 +31,21 @@
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
-  <a class="brand" href={hrefFor('dashboard')}>
-    <span aria-hidden="true">♠</span> Blackjack Trainer
-  </a>
+  <div class="bar">
+    <a class="brand" href={hrefFor('dashboard')}>Twenty-One</a>
 
-  <nav aria-label="Practice modes">
-    {#each MODES as mode (mode.id)}
-      <a href={hrefFor(mode.id)} aria-current={route.id === mode.id ? 'page' : undefined} title={mode.blurb}>
-        {mode.label}
-      </a>
-    {/each}
-  </nav>
+    <nav aria-label="Practice modes">
+      {#each MODES as mode (mode.id)}
+        <a href={hrefFor(mode.id)} aria-current={route.id === mode.id ? 'page' : undefined} title={mode.blurb}>
+          {mode.label}
+        </a>
+      {/each}
+    </nav>
 
-  <button class="settings-toggle" aria-expanded={settingsOpen} onclick={() => (settingsOpen = !settingsOpen)}>
-    Settings
-  </button>
+    <button class="settings-toggle" aria-expanded={settingsOpen} onclick={() => (settingsOpen = !settingsOpen)}>
+      Settings
+    </button>
+  </div>
 </header>
 
 {#if settingsOpen}
@@ -49,7 +53,6 @@
 {/if}
 
 <main id="main" tabindex="-1">
-  <h1 class="route-title">{route.id === 'dashboard' ? 'Dashboard' : route.label}</h1>
   <View />
 </main>
 
@@ -60,47 +63,64 @@
 <style>
   .skip {
     position: absolute; left: -999px; top: 0; z-index: 10;
-    background: var(--panel); color: var(--text-h); padding: 0.5rem 0.9rem; border-radius: var(--r-sm);
+    background: var(--panel); color: var(--text-h); padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border); border-radius: var(--r-sm);
   }
   .skip:focus { left: 0.5rem; top: 0.5rem; }
 
+  /* The bar is the page ground with a hairline under it — deliberately not a raised panel. */
   .topbar {
-    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
-    padding: 0.7rem clamp(0.75rem, 3vw, 1.5rem);
-    border-bottom: 1px solid var(--border); background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
     position: sticky; top: 0; z-index: 5;
   }
+  .bar {
+    max-width: var(--content); margin: 0 auto; padding: 0 var(--pad);
+    height: var(--bar);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--s-4);
+  }
+
   .brand {
-    font-weight: 700; color: var(--text-h); text-decoration: none;
-    font-size: 1rem; letter-spacing: -0.2px; margin-right: auto;
+    font-family: var(--heading); font-style: italic; font-size: 28px; font-weight: 500;
+    letter-spacing: -0.01em; color: var(--text-h); text-decoration: none;
   }
-  nav { display: flex; gap: 0.2rem; flex-wrap: wrap; }
+
+  nav { display: flex; gap: var(--gutter); font-size: 15px; }
   nav a {
-    padding: 0.35rem 0.75rem; border-radius: var(--r-sm); text-decoration: none;
-    color: var(--text); font-size: 0.86rem; font-weight: 500;
+    /* 26px of padding puts the active underline on the bar's own bottom hairline. */
+    padding: 26px 0; text-decoration: none; color: var(--text);
+    border-bottom: 2px solid transparent;
   }
-  nav a:hover { background: var(--hover); color: var(--text-h); }
-  nav a[aria-current='page'] { background: var(--accent-bg); color: var(--text-h); }
+  nav a:hover { color: var(--text-h); }
+  nav a[aria-current='page'] { color: var(--text-h); font-weight: 500; border-bottom-color: var(--accent); }
 
   .settings-toggle {
-    padding: 0.35rem 0.75rem; border: 1px solid var(--border); border-radius: var(--r-sm);
-    background: none; color: var(--text); font: inherit; font-size: 0.86rem; cursor: pointer;
+    padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
+    background: none; color: var(--text-h); font: inherit; font-size: 14px; cursor: pointer;
   }
-  .settings-toggle:hover { color: var(--text-h); }
+  .settings-toggle:hover { background: var(--hover); }
 
   main { display: block; outline: none; }
-  .route-title {
-    font-size: 1.15rem; font-weight: 600; color: var(--text-h);
-    margin: 1.1rem auto 0; max-width: 1120px; padding: 0 clamp(0.75rem, 3vw, 1.5rem); text-align: left;
-  }
+
   .footer {
-    margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--border);
-    font-size: 0.75rem; text-align: center; opacity: 0.7;
+    border-top: 1px solid var(--border);
+    margin-top: var(--s-6);
+  }
+  .footer p {
+    max-width: var(--content); margin: 0 auto; padding: 0 var(--pad);
+    height: 52px; display: flex; align-items: center;
+    font-family: var(--mono); font-size: 12px; color: var(--text);
   }
 
-  @media (max-width: 560px) {
-    .brand { width: 100%; margin-right: 0; }
-    nav { order: 3; width: 100%; }
-    nav a { flex: 1 1 auto; text-align: center; }
+  /* Phone: the bar grows to two rows and the modes scroll sideways rather than wrapping into
+     a block that pushes the felt off screen. */
+  @media (max-width: 860px) {
+    .bar { height: auto; padding-top: var(--s-2); flex-wrap: wrap; row-gap: 0; }
+    .brand { font-size: 24px; }
+    nav {
+      order: 3; width: 100%; gap: var(--s-4); font-size: 14px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    nav a { padding: 12px 0; white-space: nowrap; }
   }
 </style>
