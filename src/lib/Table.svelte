@@ -33,6 +33,14 @@
   let dealt = $state(0);
   let drillCell = $state(null); // a review miss clicked through to a targeted drill (#5)
   let skip = $state(false); // set by any input mid-deal; cleared when the next round starts
+  // This sitting's running tally, for the foot of the review ledger. Session-scoped on purpose:
+  // the persisted, all-time figures are the dashboard's and the Progress route's job.
+  let tally = $state({ decisions: 0, correct: 0, hands: 0 });
+  const reviewStats = $derived({
+    decisions: tally.decisions,
+    accuracy: tally.decisions ? tally.correct / tally.decisions : null,
+    hands: tally.hands,
+  });
   const phase = $derived(round ? round.phase : 'betting');
   // What is at stake right now: the round's wagers once it is dealt, the chips before that.
   const stake = $derived(round ? round.hands.reduce((s, h) => s + h.bet, 0) : liveBet);
@@ -52,6 +60,9 @@
     if (t.round?.phase === 'done' && gradedRound !== t.round) {
       gradedRound = t.round;
       gradeRound(t.round.decisions);
+      tally.decisions += t.round.decisions.length;
+      tally.correct += t.round.decisions.filter((d) => d.correct).length;
+      tally.hands += t.round.hands.length;
       persist();
       cue(t.round.decisions.every((d) => d.correct) ? 'correct' : 'wrong');
     }
@@ -135,7 +146,7 @@
   </section>
 
   {#if phase === 'done' && round?.decisions.length}
-    <Review decisions={round.decisions} net={round.net} onCell={(c) => (drillCell = c)} />
+    <Review decisions={round.decisions} net={round.net} stats={reviewStats} onCell={(c) => (drillCell = c)} />
   {/if}
 
   {#if drillCell}

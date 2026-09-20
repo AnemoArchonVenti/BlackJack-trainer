@@ -35,7 +35,8 @@
 
   // The caption is the whole status line: who holds what, or how it settled.
   const caption = $derived.by(() => {
-    if (role === 'dealer') return hideHole ? 'Dealer shows' : 'Dealer has';
+    // One card on the table, or a hole card still down, is something the dealer *shows*.
+    if (role === 'dealer') return hideHole || hand.length === 1 ? 'Dealer shows' : 'Dealer has';
     if (outcome && OUTCOME[outcome]) {
       const word = OUTCOME[outcome];
       return outcome === 'push' || net === null ? word : `${word} ${money(net)}`;
