@@ -4,6 +4,9 @@
   //   "My accuracy"     — the same grid coloured by per-cell hit rate (the heatmap)
   // Hover reveals attempts / % / Leitner bucket; clicking a cell launches a drill of that exact
   // situation, closing the spot-weakness -> practice-it loop.
+  //
+  // Editorial skin (DESIGN-SPEC §5.8): square cells with no radius on muted tints of one
+  // lightness, ink letters on top, and the view toggle is the nav's underline rather than a pill.
   import { UPCARDS } from '../engine/strategy.js';
   import { heatmap } from './session.svelte.js';
 
@@ -84,24 +87,37 @@
 </div>
 
 <style>
-  .chart { display: flex; flex-direction: column; gap: 1rem; }
-  .chart.compact { gap: 0.25rem; }
-  .toggle { display: flex; gap: 0.25rem; }
+  .chart { display: flex; flex-direction: column; gap: var(--s-4); }
+  .chart.compact { gap: 3px; }
+
+  /* Same underline the nav uses: a text button, marked by a rule, never a pill. */
+  .toggle { display: flex; gap: var(--s-4); }
   .toggle button {
-    padding: 0.35rem 0.8rem; border: 1px solid var(--border); background: none;
-    color: inherit; border-radius: 0.4rem; cursor: pointer; font: inherit; font-size: 0.85rem;
+    padding: 0 0 6px; border: none; border-bottom: 2px solid transparent; background: none;
+    color: var(--text); font: inherit; font-size: 15px; cursor: pointer;
   }
-  .toggle button.on { background: var(--accent-bg); border-color: var(--accent-border); color: var(--text-h); }
-  h3 { margin: 0 0 0.3rem; font-size: 0.9rem; color: var(--text-h); font-weight: 600; }
+  .toggle button:hover { color: var(--text-h); }
+  .toggle button.on { color: var(--text-h); font-weight: 500; border-bottom-color: var(--accent); }
+
+  h3 { margin: 0 0 var(--s-2); font-family: var(--heading); font-size: 22px; font-weight: 500; }
+
   table { border-collapse: collapse; }
-  th { font-size: 0.7rem; font-weight: 600; color: var(--text); padding: 0 0.2rem; }
-  td { padding: 1px; }
-  .cell {
-    width: 1.9rem; height: 1.5rem; border: none; border-radius: 3px; cursor: pointer;
-    font: 700 0.68rem var(--sans); color: var(--card-ink); padding: 0;
+  th {
+    font-family: var(--mono); font-size: 12px; font-weight: 400;
+    color: var(--text); padding: 0 6px;
   }
+  td { padding: 1px; } /* 1px a side = the 2px gutter the spec asks for */
+
+  .cell {
+    width: 32px; height: 26px; border: none; border-radius: 0; padding: 0;
+    cursor: pointer; font: 600 12px var(--sans); color: var(--card-ink);
+  }
+  .cell:hover:not(:disabled) { outline: 1px solid var(--text-h); outline-offset: -1px; }
   .cell:disabled { cursor: default; }
-  .compact .cell { width: 0.42rem; height: 0.42rem; border-radius: 1px; }
+
+  .compact td { padding: 1.5px; }
+  .compact .cell { width: 8px; height: 8px; }
+
   /* Reference-view action colours (only used when the accuracy shade isn't overriding them). */
   .a-H { background: var(--act-hit); }
   .a-S { background: var(--act-stand); }
@@ -109,4 +125,9 @@
   .a-P { background: var(--act-split); }
   .a-Rh { background: var(--act-surrender); }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+  @media (max-width: 560px) {
+    .cell { width: 26px; height: 24px; font-size: 11px; }
+    th { padding: 0 3px; }
+  }
 </style>
