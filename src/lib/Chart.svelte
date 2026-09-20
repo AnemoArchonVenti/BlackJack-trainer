@@ -71,6 +71,7 @@
                   <button
                     class="cell a-{cell.action}"
                     style:background={view === 'accuracy' ? shade(cell.accuracy) : null}
+                    style:color={view === 'accuracy' && cell.accuracy !== null ? 'var(--card-bg)' : null}
                     title={tip(cell)}
                     aria-label={`${label(cell)}: ${tip(cell)}`}
                     disabled={!onCell}
@@ -108,9 +109,13 @@
   }
   td { padding: 1px; } /* 1px a side = the 2px gutter the spec asks for */
 
+  /* The letter takes the page's ink, not the card's: the action tints invert between themes, so
+     a fixed dark letter fails on the dark set (1.8:1) where --text-h flips to cream (5.4-8:1).
+     In the accuracy view the shade runs brick-to-green in both themes and the letter is set
+     cream inline, since ink on those reads at 2:1. */
   .cell {
     width: 32px; height: 26px; border: none; border-radius: 0; padding: 0;
-    cursor: pointer; font: 600 12px var(--sans); color: var(--card-ink);
+    cursor: pointer; font: 600 12px var(--sans); color: var(--text-h);
   }
   .cell:hover:not(:disabled) { outline: 1px solid var(--text-h); outline-offset: -1px; }
   .cell:disabled { cursor: default; }

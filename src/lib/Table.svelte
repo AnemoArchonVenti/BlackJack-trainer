@@ -17,6 +17,7 @@
   import { session, gradeRound, persist } from './session.svelte.js';
   import CellDrill from './CellDrill.svelte';
   import { cue } from './audio.js';
+  import { money } from './money.js';
 
   // Bankroll is the persisted one (#5): the table owns it during a round, the session owns it across reloads.
   const t = createTable({ shoe: createShoe({ seed: Date.now() }), bankroll: session.bankroll });
@@ -92,8 +93,8 @@
 
     <div class="meta">
       <div class="figures">
-        <span class="item">Bankroll <b>${bankroll}</b></span>
-        <span class="item">Bet <b>${stake}</b></span>
+        <span class="item">Bankroll <b>{money(bankroll)}</b></span>
+        <span class="item">Bet <b>{money(stake)}</b></span>
       </div>
       <span class="shoe">Shoe · {dealt} of {SHOE_SIZE} dealt</span>
     </div>
@@ -139,7 +140,7 @@
         {/each}
       {:else if canRebet}
         <button class="action primary wide" onclick={() => deal(lastBet)}>
-          Next hand (Enter) — ${lastBet}
+          Next hand (Enter) — {money(lastBet)}
         </button>
       {/if}
     </div>
@@ -161,7 +162,7 @@
     column-gap: var(--gutter); row-gap: var(--s-5);
     align-items: start; text-align: left;
   }
-  .table { grid-column: 1 / span 8; display: flex; flex-direction: column; gap: 20px; }
+  .table { grid-column: 1 / span 8; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
@@ -181,15 +182,15 @@
     background: var(--felt); min-height: 60vh;
   }
   .inner {
-    flex: 1; box-sizing: border-box;
+    flex: 1; min-width: 0;
     border: 1px solid var(--felt-inset); border-radius: var(--r-md);
     padding: 40px 32px;
     display: flex; flex-direction: column; justify-content: space-between; align-items: center;
     gap: var(--s-4);
   }
-  .zone { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); }
+  .zone { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); max-width: 100%; }
   .bottom { margin-top: auto; }
-  .spots { display: flex; gap: var(--s-5); flex-wrap: wrap; justify-content: center; }
+  .spots { display: flex; gap: var(--s-5); flex-wrap: wrap; justify-content: center; max-width: 100%; }
 
   /* ── Actions, below the felt ── */
   .controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }

@@ -8,6 +8,7 @@
   import Chart from './Chart.svelte';
   import CellDrill from './CellDrill.svelte';
   import { bucketCounts, recentAccuracy, session } from './session.svelte.js';
+  import { money } from './money.js';
 
   let drillCell = $state(null);
   let view = $state('accuracy');
@@ -31,7 +32,7 @@
         <div><dt>{bucket}</dt><dd>{n}</dd></div>
       {/each}
       <div><dt>Last 50 decisions</dt><dd>{pct(recent)}</dd></div>
-      <div><dt>Bankroll</dt><dd>${session.bankroll.toLocaleString()}</dd></div>
+      <div><dt>Bankroll</dt><dd>{money(session.bankroll)}</dd></div>
     </dl>
     <p class="hint">Click any cell to drill that exact situation.</p>
   </aside>

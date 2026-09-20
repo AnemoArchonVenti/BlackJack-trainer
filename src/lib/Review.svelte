@@ -10,6 +10,7 @@
   import { cellFor } from '../engine/strategy.js';
   import { value } from '../engine/hand.js';
   import { cellStats } from './session.svelte.js';
+  import { money } from './money.js';
 
   let { decisions = [], net = 0, stats = null, onCell = null } = $props();
 
@@ -25,10 +26,11 @@
   const pairRank = (key) => (key === 11 ? 'aces' : `${key}s`);
 
   // "Hard 12 against a 3" / "Soft 18 against a 9" / "A pair of 8s against a 10".
+  // The upcard comes off the cell, which carries it as a number — `d.upcard` is the card object.
   function situation(d) {
     const cell = cellFor(d.hand, d.upcard);
-    if (cell.type === 'pair') return `A pair of ${pairRank(cell.key)} against ${upcard(d.upcard)}`;
-    return `${cell.type === 'soft' ? 'Soft' : 'Hard'} ${value(d.hand)} against ${upcard(d.upcard)}`;
+    if (cell.type === 'pair') return `A pair of ${pairRank(cell.key)} against ${upcard(cell.up)}`;
+    return `${cell.type === 'soft' ? 'Soft' : 'Hard'} ${value(d.hand)} against ${upcard(cell.up)}`;
   }
 
   // A miss also links its chart cell, tying the mistake to the heatmap mental model (#5 F6).
@@ -42,7 +44,7 @@
   const cellKey = (c) => `${c.type}-${c.key}-${c.up}`;
   const hint = (s) => (s.attempts ? `${s.correct}/${s.attempts} correct here · ${s.bucket}` : 'first look at this cell');
 
-  const result = $derived(net > 0 ? `Won $${net}` : net < 0 ? `Lost $${-net}` : 'Push');
+  const result = $derived(net > 0 ? `Won ${money(net)}` : net < 0 ? `Lost ${money(net)}` : 'Push');
   const tone = $derived(net > 0 ? 'win' : net < 0 ? 'lose' : 'push');
   const pct = (n) => (n === null ? '—' : `${Math.round(n * 100)}%`);
 </script>

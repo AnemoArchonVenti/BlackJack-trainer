@@ -41,6 +41,9 @@
     background: var(--c); color: var(--chip-ink);
     font: 600 14px var(--sans);
     border: 2px dashed color-mix(in oklab, var(--on-felt-strong) 55%, transparent);
+    /* A cream rim, as a real chip has: --chip-25 is the felt's own green, so without an edge
+       that denomination vanishes into the table. */
+    outline: 2px solid var(--card-bg);
     cursor: pointer;
   }
   .chip:disabled { opacity: 0.35; cursor: not-allowed; }

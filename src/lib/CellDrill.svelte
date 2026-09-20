@@ -103,10 +103,11 @@
   .close:hover { color: var(--text-h); }
 
   .felt { display: flex; padding: 12px; border-radius: var(--r-lg); background: var(--felt); }
+  /* Dealer above, player below — the same reading order as the real felt. */
   .inner {
-    flex: 1; box-sizing: border-box;
+    flex: 1; min-width: 0;
     border: 1px solid var(--felt-inset); border-radius: var(--r-md); padding: var(--s-4);
-    display: flex; gap: var(--s-5); justify-content: center; flex-wrap: wrap;
+    display: flex; flex-direction: column; gap: var(--s-4); align-items: center; max-width: 100%;
   }
 
   .moves { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }

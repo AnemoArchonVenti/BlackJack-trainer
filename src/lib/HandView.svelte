@@ -14,6 +14,7 @@
   import Card from './Card.svelte';
   import { value, isSoft } from '../engine/hand.js';
   import { motion } from './session.svelte.js';
+  import { money } from './money.js';
 
   let {
     hand,
@@ -30,14 +31,17 @@
   const SUITS = ['♠', '♥', '♣', '♦']; // cosmetic only
   const total = $derived(hideHole ? value([hand[0]]) : value(hand));
 
-  const money = (n) => `$${Math.abs(n)}`;
   const OUTCOME = { win: 'Won', lose: 'Lost', push: 'Push' };
+
+  // A settled hand leads with its total and then says how it went, so the line reads
+  // "20 · Won $7.50" rather than running the money straight into the number.
+  const settled = $derived(role !== 'dealer' && !!OUTCOME[outcome]);
 
   // The caption is the whole status line: who holds what, or how it settled.
   const caption = $derived.by(() => {
     // One card on the table, or a hole card still down, is something the dealer *shows*.
     if (role === 'dealer') return hideHole || hand.length === 1 ? 'Dealer shows' : 'Dealer has';
-    if (outcome && OUTCOME[outcome]) {
+    if (settled) {
       const word = OUTCOME[outcome];
       return outcome === 'push' || net === null ? word : `${word} ${money(net)}`;
     }
@@ -74,15 +78,23 @@
 
   {#if role !== 'dealer'}
     <span class="caption" class:active>
-      <i class="text {outcome}">{caption}</i>
-      <b class="total" class:active>{total}</b>
+      {#if settled}
+        <b class="total">{total}</b>
+        <i class="text {outcome}">· {caption}</i>
+      {:else}
+        <i class="text">{caption}</i>
+        <b class="total" class:active>{total}</b>
+      {/if}
     </span>
   {/if}
 </div>
 
 <style>
-  .hand { display: flex; flex-direction: column; gap: 14px; align-items: center; }
-  .cards { display: flex; gap: 10px; }
+  /* A dealer play-out can run to five or six cards. The row wraps rather than pushing the felt
+     wider than its column — which needs the explicit max-width, since a flex item in a centred
+     column otherwise sizes to max-content and never reaches its wrap point. */
+  .hand { display: flex; flex-direction: column; gap: 14px; align-items: center; max-width: 100%; }
+  .cards { display: flex; gap: 10px; max-width: 100%; flex-wrap: wrap; justify-content: center; }
   .slot { display: flex; }
 
   .caption {

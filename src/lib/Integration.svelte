@@ -16,6 +16,7 @@
   import { session, gradeCards, persist } from './session.svelte.js';
   import { cue } from './audio.js';
   import HandView from './HandView.svelte';
+  import { money } from './money.js';
 
   const UNIT = 10; // dollars per betting unit
   const RULES = { deviations: true }; // the whole point of this mode
@@ -170,7 +171,7 @@
     </p>
 
     <div class="meta">
-      <span class="item">Bankroll <b>${bankroll}</b></span>
+      <span class="item">Bankroll <b>{money(bankroll)}</b></span>
       <span class="rounds">{history.length} rounds this shoe</span>
     </div>
 
@@ -209,7 +210,7 @@
                 <span class="unit">Bet in units</span>
                 <input type="number" min="1" max={MAX_SPREAD} bind:value={units} />
               </label>
-              <span class="money">× ${UNIT} = ${units * UNIT}</span>
+              <span class="money">× {money(UNIT)} = {money(units * UNIT)}</span>
               <button class="deal" onclick={deal}>Deal <kbd>enter</kbd></button>
             </div>
           {/if}
@@ -229,7 +230,7 @@
 
     <details class="ramp">
       <summary>Bet ramp</summary>
-      <p>Bet the ramp for the true count you are holding. 1 unit = ${UNIT}.</p>
+      <p>Bet the ramp for the true count you are holding. 1 unit = {money(UNIT)}.</p>
       <ul>
         {#each RAMP as rung, i (rung.units)}
           <li>
@@ -261,13 +262,13 @@
 
   .felt { display: flex; padding: 12px; border-radius: var(--r-lg); background: var(--felt); min-height: 26rem; }
   .inner {
-    flex: 1; box-sizing: border-box;
+    flex: 1; min-width: 0;
     border: 1px solid var(--felt-inset); border-radius: var(--r-md); padding: var(--s-4) var(--s-4);
     display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: var(--s-4);
   }
-  .zone { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); }
+  .zone { display: flex; flex-direction: column; align-items: center; gap: var(--s-4); max-width: 100%; }
   .bottom { margin-top: auto; }
-  .spots { display: flex; gap: var(--s-5); flex-wrap: wrap; justify-content: center; }
+  .spots { display: flex; gap: var(--s-5); flex-wrap: wrap; justify-content: center; max-width: 100%; }
   /* Any input resolves the deal choreography immediately (#10 F5). */
   .felt.skip :global(*) { animation: none !important; transition: none !important; }
 

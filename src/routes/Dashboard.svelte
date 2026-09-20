@@ -12,6 +12,7 @@
   import { bucketCounts, recentAccuracy, gateProgress, nextStep, heatmap, session } from '../lib/session.svelte.js';
   import { CLEAN_RUNS_TO_PASS } from '../engine/drills.js';
   import { STRATEGY_ACCURACY, STRATEGY_WINDOW } from '../srs/gates.js';
+  import { money } from '../lib/money.js';
 
   const counts = $derived(bucketCounts());
   const recent = $derived(recentAccuracy(50));
@@ -95,7 +96,7 @@
     </div>
     <div class="stat">
       <span class="label">Bankroll</span>
-      <span class="figure">${session.bankroll.toLocaleString()}</span>
+      <span class="figure">{money(session.bankroll)}</span>
     </div>
     <div class="stat">
       <span class="label">Cells mastered</span>

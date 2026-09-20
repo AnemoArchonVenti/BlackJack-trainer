@@ -6,7 +6,7 @@
   // mode is marked by a 2px green underline sitting on the bar's bottom hairline — no pill, no
   // filled background anywhere in the nav. The shell no longer prints a route title; each route
   // sets its own heading, so the page starts with the words that route wants to lead with.
-  import { MODES, parseRoute, hrefFor } from './router.js';
+  import { ROUTES, parseRoute, hrefFor } from './router.js';
   import Dashboard from './Dashboard.svelte';
   import Settings from '../lib/Settings.svelte';
   import Table from '../lib/Table.svelte';
@@ -34,10 +34,12 @@
   <div class="bar">
     <a class="brand" href={hrefFor('dashboard')}>Twenty-One</a>
 
+    <!-- Every route, dashboard included: the underline is the "you are here", so the hub needs a
+         seat in it too (design/editorial mockups). The menu is still never locked. -->
     <nav aria-label="Practice modes">
-      {#each MODES as mode (mode.id)}
-        <a href={hrefFor(mode.id)} aria-current={route.id === mode.id ? 'page' : undefined} title={mode.blurb}>
-          {mode.label}
+      {#each ROUTES as r (r.id)}
+        <a href={hrefFor(r.id)} aria-current={route.id === r.id ? 'page' : undefined} title={r.blurb}>
+          {r.label}
         </a>
       {/each}
     </nav>

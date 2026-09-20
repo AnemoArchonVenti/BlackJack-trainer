@@ -138,8 +138,17 @@
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────────────────── */
+/* Border-box everywhere: the skin sets widths and paddings on the same element all over (the
+   felt, the drill stages, the inputs), and content-box silently pushes those past their column. */
+*, *::before, *::after { box-sizing: border-box; }
+
 body { margin: 0; }
 p { margin: 0; }
+
+/* Cards deal in from a point off to the right of the felt (SPEC §11 F5). On a narrow screen that
+   transform would otherwise show up as a horizontal scrollbar for the length of the animation.
+   `clip` contains it without creating a scroll container, so the sticky top bar still sticks. */
+body { overflow-x: clip; }
 
 h1, h2, h3 {
   font-family: var(--heading);

@@ -194,7 +194,7 @@
 
   .stage { display: flex; width: 100%; padding: 12px; border-radius: var(--r-lg); background: var(--felt); }
   .inner {
-    flex: 1; box-sizing: border-box;
+    flex: 1; min-width: 0;
     border: 1px solid var(--felt-inset); border-radius: var(--r-md); padding: var(--s-5) var(--s-4);
     display: flex; gap: var(--s-5); align-items: center; justify-content: center; flex-wrap: wrap;
   }

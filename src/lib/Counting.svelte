@@ -238,7 +238,7 @@
   /* The felt, same flat panel and hairline frame as the table. */
   .stage { display: flex; width: 100%; padding: 12px; border-radius: var(--r-lg); background: var(--felt); }
   .inner {
-    flex: 1; box-sizing: border-box; min-height: 12rem;
+    flex: 1; min-width: 0; min-height: 12rem;
     border: 1px solid var(--felt-inset); border-radius: var(--r-md); padding: var(--s-4);
     display: flex; gap: var(--s-4); align-items: center; justify-content: center; flex-wrap: wrap;
   }
