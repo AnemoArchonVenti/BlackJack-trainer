@@ -6,6 +6,10 @@
   // Motion (F5): the face-down state is a real 3D flip, so the dealer's hole card turns over
   // instead of blinking. The duration comes from the motion preference; at Off it is 0ms and the
   // card simply is face up. A `.skip` ancestor kills the transition mid-flight (see Table).
+  //
+  // Editorial skin (DESIGN-SPEC §5.3): 92×130 with a hairline edge and no shadow. The back is a
+  // brick panel inset inside a cream frame, the way a real card's back is printed short of its
+  // edge, with a fine 45° hatch over it.
   import { motion } from './session.svelte.js';
 
   let { rank, suit = '♠', faceDown = false } = $props();
@@ -22,18 +26,18 @@
   aria-label={faceDown ? 'face-down card' : `${label} of ${suit}`}
 >
   <div class="face front" class:red>
-    <span class="corner tl">{label}<br />{suit}</span>
+    <span class="corner tl">{label}<br /><span class="suit">{suit}</span></span>
     <span class="pip">{suit}</span>
-    <span class="corner br">{label}<br />{suit}</span>
+    <span class="corner br">{label}<br /><span class="suit">{suit}</span></span>
   </div>
-  <div class="face back"></div>
+  <div class="face back"><span class="print"></span></div>
 </div>
 
 <style>
   .card {
     position: relative;
-    width: 3.2rem;
-    height: 4.6rem;
+    width: 5.4rem;
+    height: 7.6rem;
     flex: none;
     transform-style: preserve-3d;
     transition: transform var(--flip-ms) ease-out;
@@ -43,35 +47,50 @@
   .face {
     position: absolute;
     inset: 0;
-    border-radius: var(--r-sm);
+    border-radius: var(--r-md);
     border: 1px solid var(--card-border);
-    box-shadow: var(--shadow);
+    background: var(--card-bg);
     backface-visibility: hidden;
-    font-family: var(--heading);
+    font-family: var(--sans);
   }
-  .front { background: var(--card-bg); color: var(--card-ink); }
+  .front { color: var(--card-ink); }
   .front.red { color: var(--card-red); }
-  .back {
-    transform: rotateY(180deg);
+
+  .back { transform: rotateY(180deg); display: grid; place-items: center; }
+  /* The printed panel stops 10px short of the card's edge, like a real back. */
+  .print {
+    position: absolute;
+    inset: 10px;
+    border-radius: 3px;
     background: var(--card-back);
-    background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(255, 255, 255, 0.12) 6px 12px);
+    background-image: repeating-linear-gradient(45deg, transparent 0 5px, rgba(255, 255, 255, 0.14) 5px 10px);
   }
 
   .corner {
     position: absolute;
-    font-size: 0.78rem;
-    line-height: 0.85;
-    font-weight: 700;
+    font-size: 20px;
+    line-height: 1;
+    font-weight: 600;
     text-align: center;
   }
-  .tl { top: 0.22rem; left: 0.28rem; }
-  .br { bottom: 0.22rem; right: 0.28rem; transform: rotate(180deg); }
+  .corner .suit { font-size: 16px; }
+  .tl { top: 8px; left: 10px; }
+  .br { bottom: 8px; right: 10px; transform: rotate(180deg); }
   .pip {
     position: absolute;
     inset: 0;
     display: grid;
     place-items: center;
-    font-size: 1.7rem;
+    font-size: 40px;
+  }
+
+  @media (max-width: 560px) {
+    .card { width: 4rem; height: 5.6rem; }
+    .corner { font-size: 16px; }
+    .corner .suit { font-size: 12px; }
+    .pip { font-size: 28px; }
+    .tl { top: 6px; left: 7px; }
+    .br { bottom: 6px; right: 7px; }
   }
 
   @media (prefers-reduced-motion: reduce) {

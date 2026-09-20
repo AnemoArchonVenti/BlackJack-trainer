@@ -6,45 +6,111 @@
   // felt — with a per-card stagger, so a deal reads as a deal and the dealer's play-out lands one
   // card at a time. Reduced motion cross-fades instead; Off is instant. One transition function
   // switches on the resolved preference, so there is a single place that decides how a card arrives.
+  //
+  // Editorial skin (DESIGN-SPEC §5.4): the hand says what it is in words — "Dealer shows 4",
+  // "You hold hard 15" — instead of wearing a coloured ring. Active, won, lost and pushed are all
+  // said in the caption, so nothing on the felt is outlined or boxed.
   import { fly, fade } from 'svelte/transition';
   import Card from './Card.svelte';
-  import { value } from '../engine/hand.js';
+  import { value, isSoft } from '../engine/hand.js';
   import { motion } from './session.svelte.js';
 
-  let { hand, label = '', hideHole = false, outcome = '' } = $props();
+  let {
+    hand,
+    role = 'player',
+    hideHole = false,
+    outcome = '',
+    active = false,
+    bet = 0,
+    index = null,
+    split = false,
+    net = null,
+  } = $props();
+
   const SUITS = ['♠', '♥', '♣', '♦']; // cosmetic only
   const total = $derived(hideHole ? value([hand[0]]) : value(hand));
 
+  const money = (n) => `$${Math.abs(n)}`;
+  const OUTCOME = { win: 'Won', lose: 'Lost', push: 'Push' };
+
+  // The caption is the whole status line: who holds what, or how it settled.
+  const caption = $derived.by(() => {
+    if (role === 'dealer') return hideHole ? 'Dealer shows' : 'Dealer has';
+    if (outcome && OUTCOME[outcome]) {
+      const word = OUTCOME[outcome];
+      return outcome === 'push' || net === null ? word : `${word} ${money(net)}`;
+    }
+    if (split) return `Hand ${index + 1} · ${money(bet)}`;
+    return `You hold ${isSoft(hand) ? 'soft' : 'hard'}`;
+  });
+
   const SHOE = { x: 180, y: -160 }; // where the shoe sits relative to a spot
 
-  function dealIn(node, { index = 0 } = {}) {
+  function dealIn(node, { index: i = 0 } = {}) {
     const m = motion();
     if (!m.duration) return {}; // Off: no animation at all, not a zero-length one
     return m.fly
-      ? fly(node, { ...SHOE, duration: m.duration, delay: index * m.stagger, opacity: 0.3 })
+      ? fly(node, { ...SHOE, duration: m.duration, delay: i * m.stagger, opacity: 0.3 })
       : fade(node, { duration: m.duration });
   }
 </script>
 
-<div class="hand">
-  {#if label}<span class="label">{label} <b>{total}{hideHole ? '+' : ''}</b></span>{/if}
-  <div class="cards" class:outcome={!!outcome} data-outcome={outcome}>
+<div class="hand" class:top={role === 'dealer'}>
+  {#if role === 'dealer'}
+    <span class="caption" class:active>
+      <i class="text {outcome}">{caption}</i>
+      <b class="total">{total}{hideHole ? '+' : ''}</b>
+    </span>
+  {/if}
+
+  <div class="cards">
     {#each hand as card, i (i)}
       <div class="slot" in:dealIn={{ index: i }}>
         <Card rank={card.rank} suit={SUITS[i % 4]} faceDown={hideHole && i === 1} />
       </div>
     {/each}
   </div>
+
+  {#if role !== 'dealer'}
+    <span class="caption" class:active>
+      <i class="text {outcome}">{caption}</i>
+      <b class="total" class:active>{total}</b>
+    </span>
+  {/if}
 </div>
 
 <style>
-  .hand { display: flex; flex-direction: column; gap: 0.4rem; align-items: center; }
-  .label { font-size: 0.85rem; color: var(--on-felt); }
-  .label b { color: var(--on-felt-strong); }
-  .cards { display: flex; gap: 0.35rem; padding: 0.25rem; border-radius: var(--r-md); }
+  .hand { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .cards { display: flex; gap: 10px; }
   .slot { display: flex; }
-  .cards.outcome[data-outcome='win'] { box-shadow: 0 0 0 2px var(--win); }
-  .cards.outcome[data-outcome='lose'] { box-shadow: 0 0 0 2px var(--lose); }
-  .cards.outcome[data-outcome='push'] { box-shadow: 0 0 0 2px var(--push); }
-  .cards.outcome[data-outcome='active'] { box-shadow: 0 0 0 2px var(--accent); }
+
+  .caption {
+    display: inline-flex; align-items: baseline; gap: 8px;
+    font-family: var(--heading); color: var(--on-felt);
+  }
+  .text { font-style: italic; font-size: 18px; font-weight: 400; }
+  .caption.active .text { color: var(--on-felt-strong); }
+
+  .total {
+    font-size: 26px; font-weight: 600; font-style: normal;
+    color: var(--on-felt-strong); font-variant-numeric: tabular-nums;
+  }
+  /* The hand you are acting on is the one wearing the light: its total inverts. */
+  .total.active {
+    background: var(--on-felt-strong); color: var(--felt);
+    padding: 0 8px; border-radius: var(--r-sm);
+  }
+
+  /* Money colours are mixed toward the felt's own ink before they land on green — the raw
+     --win is the felt colour itself, and raw --lose does not carry on it either. */
+  .text.win { color: color-mix(in oklab, var(--win) 30%, var(--on-felt-strong)); }
+  .text.lose { color: color-mix(in oklab, var(--lose) 45%, var(--on-felt-strong)); }
+  .text.push { color: var(--on-felt-strong); }
+
+  @media (max-width: 560px) {
+    .hand { gap: 10px; }
+    .cards { gap: 6px; }
+    .text { font-size: 16px; }
+    .total { font-size: 22px; }
+  }
 </style>
