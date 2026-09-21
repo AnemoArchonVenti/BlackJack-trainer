@@ -36,16 +36,25 @@
   .chipstack { display: flex; flex-direction: column; gap: var(--s-3); align-items: center; }
   .chips { display: flex; gap: var(--s-2); }
 
+  /* A chip, not a coloured circle. Three background layers, painted top to bottom:
+       1. the face, a solid disc of the denomination colour;
+       2. the fine ring that separates the face from the rim;
+       3. the rim, whose six cream edge spots are cut by a repeating conic gradient.
+     `closest-side` is what makes the stops readable — without it a radial gradient in a square
+     box measures from the centre to the *corner*, so 68% would overshoot the circle. The cream
+     also keeps --chip-25 visible: that denomination is the felt's own green. */
   .chip {
-    width: 48px; height: 48px; border-radius: 50%;
-    background: var(--c); color: var(--chip-ink);
-    font: 600 14px var(--sans);
-    border: 2px dashed color-mix(in oklab, var(--on-felt-strong) 55%, transparent);
-    /* A cream rim, as a real chip has: --chip-25 is the felt's own green, so without an edge
-       that denomination vanishes into the table. */
-    outline: 2px solid var(--card-bg);
+    width: 56px; height: 56px; border-radius: 50%; border: none; padding: 0;
+    background:
+      radial-gradient(circle closest-side, var(--c) 0 70.5%, transparent 71%),
+      radial-gradient(circle closest-side, transparent 0 70.5%, var(--chip-spot) 71% 73.5%, transparent 74%),
+      repeating-conic-gradient(from 15deg, var(--chip-spot) 0 20deg, var(--c) 20deg 60deg);
+    color: var(--chip-ink);
+    font: 600 14px/1 var(--sans); font-variant-numeric: tabular-nums;
+    outline: 1px solid var(--chip-spot);
     cursor: pointer;
   }
+  .chip:hover:not(:disabled) { outline-width: 2px; }
   .chip:disabled { opacity: 0.35; cursor: not-allowed; }
 
   .row { display: flex; gap: var(--s-2); align-items: center; }

@@ -52,6 +52,7 @@
   --card-border: #d9d3c7;
   --card-back: #8a2f2a;     /* brick red back with a fine diagonal hatch */
   --chip-ink: #ffffff;
+  --chip-spot: #fbf9f3;    /* the edge spots and the ring, as on a real chip */
   --chip-1: #6b655c;
   --chip-5: #8a2f2a;
   --chip-25: #1f5c3f;
@@ -108,6 +109,7 @@
     --felt-edge: #1d4d38;
     --felt-inset: rgba(212, 168, 83, 0.35);
     --card-bg: #f6f1e6;
+    --chip-spot: #f6f1e6;
     --card-border: #d6cdbb;
     --card-back: #1a1713;
     --win: #8fcfa4;

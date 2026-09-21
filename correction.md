@@ -52,3 +52,36 @@ cells: 8px squares, 3px gap, no radius."* The implementation was faithful; the d
 **Verified:** 99/99 tests pass, `npm run build` clean, and both the Dashboard thumbnail and the
 full Progress chart checked in the browser. Dark mode was not visually checked — only the one
 token changed there.
+
+---
+
+### 2. The bet chips did not look like chips
+
+**Where:** `src/lib/ChipStack.svelte` — the $1 / $5 / $25 / $100 denomination buttons on the felt.
+**Severity:** minor — cosmetic, but it is the first thing you touch in the Play mode.
+
+**What happened:**
+Each chip was a flat 48px disc of one colour with `border: 2px dashed` over it and a separate
+`outline: 2px solid`. A dashed border on a circle renders as a ring of small even ticks, and the
+outline sat outside it as a second, detached ring — so the result read as a coloured dot with a
+dotted halo. Nothing about it said "casino chip": no edge spots, no inner ring, no face.
+
+**Root cause:** the same as correction #1 — `DESIGN-SPEC.md` §5.5 specified it: *"48px circles
+with a 2px dashed ring at 55% white."* The code was faithful to the spec.
+
+**Fix:** the chip is now built from three background layers instead of a border.
+
+- The face is a solid disc of the denomination colour; a fine `--chip-spot` ring sits at
+  71–73.5% of the radius; the rim carries six cream edge spots cut by a
+  `repeating-conic-gradient(from 15deg, …)`.
+- `circle closest-side` on the radial stops — without it a radial gradient in a square box
+  measures centre-to-*corner*, so every percentage overshoots the circle by ~41%.
+- 56px rather than 48px, with tabular figures so `$100` sits inside the face.
+- New `--chip-spot` token (`#fbf9f3` light, `#f6f1e6` dark) in `src/app.css` and
+  `design/editorial/tokens.css`. The cream is also what keeps `--chip-25` — the felt's own
+  green — from vanishing into the table.
+- Hover thickens the outline to 2px; the old dashed border and the detached outline are gone.
+- `DESIGN-SPEC.md` §5.5 rewritten to describe the layered chip.
+
+**Verified:** 103/103 tests pass, build clean, and the chips were clicked through in the browser
+($5 + $25 → "Bet $30"). Dark mode not visually checked — only the one token differs there.

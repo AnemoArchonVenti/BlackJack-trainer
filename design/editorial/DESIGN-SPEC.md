@@ -171,10 +171,15 @@ grid, with the same height.
 
 ### 5.5 Chips (`ChipStack.svelte`)
 
-Chips become 48px circles with a 2px dashed ring at 55% white, the denomination in Plex Sans
-14/600 white, colours from `--chip-*`. Clear / Rebet are outlined ink buttons; Deal is the
-green primary. The "Bet $x" readout is Newsreader 20 white. The whole chip stack sits inside the
-felt's bottom area during the betting phase, centred.
+Chips are 56px and read as chips, not as coloured circles: a solid face in the denomination
+colour, a fine `--chip-spot` ring at 71–73.5% of the radius, and a rim carrying six cream edge
+spots cut by a `repeating-conic-gradient`. Built from three background layers, with
+`circle closest-side` on the radial stops so they measure to the chip's edge rather than to the
+box's corner. A 1px `--chip-spot` outline keeps `--chip-25` — the felt's own green — off the
+table. Denomination in Plex Sans 14/600 white, tabular figures; colours from `--chip-*`.
+Clear / Rebet are outlined ink buttons; Deal is the green primary. The "Bet $x" readout is
+Newsreader 20 white. The whole chip stack sits inside the felt's bottom area during the betting
+phase, centred.
 
 ### 5.6 Review panel (`Review.svelte`)
 
