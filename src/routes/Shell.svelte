@@ -7,6 +7,7 @@
   // filled background anywhere in the nav. The shell no longer prints a route title; each route
   // sets its own heading, so the page starts with the words that route wants to lead with.
   import { ROUTES, parseRoute, hrefFor } from './router.js';
+  import { RULE_LINE, METHOD_LINE } from '../lib/house.js';
   import Dashboard from './Dashboard.svelte';
   import Settings from '../lib/Settings.svelte';
   import Table from '../lib/Table.svelte';
@@ -58,8 +59,11 @@
   <View />
 </main>
 
+<!-- On every page, because a player should never have to guess which game they are being graded
+     against. Both lines come from lib/house.js, which spells them from the engine. -->
 <footer class="footer">
-  <p>6 decks · dealer stands on soft 17 · double after split · late surrender</p>
+  <p><span class="tag">The game</span>{RULE_LINE}</p>
+  <p><span class="tag">The method</span>{METHOD_LINE}</p>
 </footer>
 
 <style>
@@ -110,8 +114,14 @@
   }
   .footer p {
     max-width: var(--content); margin: 0 auto; padding: 0 var(--pad);
-    height: 52px; display: flex; align-items: center;
+    min-height: 34px; display: flex; align-items: center; flex-wrap: wrap; gap: 0 10px;
     font-family: var(--mono); font-size: 12px; color: var(--text);
+  }
+  .footer p:first-of-type { padding-top: 12px; }
+  .footer p:last-of-type { padding-bottom: 12px; }
+  /* The label the line answers, in the same uppercase mono the page uses for every kicker. */
+  .footer .tag {
+    min-width: 92px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-h);
   }
 
   /* Phone: the bar grows to two rows and the modes scroll sideways rather than wrapping into

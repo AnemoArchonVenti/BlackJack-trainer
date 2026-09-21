@@ -12,7 +12,7 @@ const ELSE = { D: 'H', Ds: 'S', Rh: 'H' };
 
 // v1 fixed ruleset (SPEC §1). blackjackPays 3:2 and maxHands 4 are standard;
 // ponytail: no payout/resplit rule is written in SPEC/research, these are the conventional defaults.
-const RULES = { h17: false, das: true, surrender: true, maxHands: 4, blackjackPays: 1.5 };
+export const RULES = { h17: false, das: true, surrender: true, maxHands: 4, blackjackPays: 1.5 };
 
 const isNatural = (h) => h.cards.length === 2 && !h.fromSplit && value(h.cards) === 21;
 

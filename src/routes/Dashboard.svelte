@@ -13,6 +13,7 @@
   import { CLEAN_RUNS_TO_PASS } from '../engine/drills.js';
   import { STRATEGY_ACCURACY, STRATEGY_WINDOW } from '../srs/gates.js';
   import { money } from '../lib/money.js';
+  import { HOUSE_RULES, METHODS, WHY_FIXED } from '../lib/house.js';
 
   const counts = $derived(bucketCounts());
   const recent = $derived(recentAccuracy(50));
@@ -126,6 +127,38 @@
     <div class="thumbwrap"><Chart compact view="accuracy" /></div>
     <span class="textlink">Open the full chart</span>
   </a>
+
+  <!-- Said plainly and on the landing page, not buried in a footer: one game, three methods.
+       Every number below is spelled from the engine by lib/house.js. -->
+  <section class="house" aria-labelledby="house-heading">
+    <h2 id="house-heading">One game, taught three ways.</h2>
+
+    <div class="col rules">
+      <span class="kicker">The house rules</span>
+      <dl>
+        {#each HOUSE_RULES as rule (rule.term)}
+          <div class="rule">
+            <dt>{rule.term}</dt>
+            <dd>{rule.detail}</dd>
+          </div>
+        {/each}
+      </dl>
+    </div>
+
+    <div class="col methods">
+      <span class="kicker">What you are taught</span>
+      <ol>
+        {#each METHODS as method, i (method.name)}
+          <li>
+            <h3><span class="n" aria-hidden="true">{i + 1}</span>{method.name}</h3>
+            <p>{method.what}</p>
+            <p class="how">{method.how}</p>
+          </li>
+        {/each}
+      </ol>
+      <p class="why">{WHY_FIXED}</p>
+    </div>
+  </section>
 </div>
 
 <style>
@@ -200,10 +233,50 @@
   .thumbwrap { width: 100%; }
   .thumb .textlink { font-size: 15px; }
 
+  /* ── House rules and methods ──
+     A full-width closing band, set like the rest of the page: rules and space, no boxes. */
+  .house {
+    grid-column: 1 / -1; border-top: 1px solid var(--rule); padding-top: 28px;
+    display: grid; grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gutter); row-gap: 28px;
+  }
+  .house h2 {
+    grid-column: 1 / -1; margin: 0;
+    font-family: var(--heading); font-size: clamp(26px, 3vw, 34px); font-weight: 500;
+    line-height: 1.1; color: var(--text-h);
+  }
+  .house .kicker { display: block; margin-bottom: 14px; }
+  .house .rules { grid-column: 1 / span 6; }
+  .house .methods { grid-column: 8 / span 5; }
+
+  .house dl { margin: 0; }
+  .house .rule {
+    display: grid; grid-template-columns: 1fr; gap: 2px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .house .rule:first-child { padding-top: 0; }
+  .house dt { font-size: 16px; font-weight: 500; color: var(--text-h); }
+  .house dd { margin: 0; font-size: 14px; color: var(--text); text-wrap: pretty; }
+
+  .house ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 20px; }
+  .house ol h3 {
+    margin: 0 0 4px; font-family: var(--heading); font-size: 20px; font-weight: 500;
+    color: var(--text-h); display: flex; align-items: baseline; gap: 10px;
+  }
+  .house .n { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .house ol p { margin: 0; font-size: 14px; color: var(--text); text-wrap: pretty; }
+  .house .how { margin-top: 3px; }
+  .house .why {
+    margin: 26px 0 0; padding-top: 14px; border-top: 1px solid var(--border);
+    font-size: 14px; color: var(--text); text-wrap: pretty;
+  }
+
   @media (max-width: 960px) {
     .dash { grid-template-columns: 1fr; row-gap: 40px; padding-top: 40px; }
-    .hero, .stats, .path, .thumb { grid-column: 1; }
+    .hero, .stats, .path, .thumb, .house { grid-column: 1; }
     .path li { grid-template-columns: 40px 1fr; row-gap: var(--s-1); }
     .path .detail { grid-column: 2; }
+    .house { grid-template-columns: 1fr; }
+    .house h2, .house .rules, .house .methods { grid-column: 1; }
   }
 </style>

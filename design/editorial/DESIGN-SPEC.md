@@ -101,8 +101,10 @@ underline flush with the bar's bottom hairline** (achieve with `padding: 26px 0`
 `border-bottom: 2px solid var(--accent)`; the hairline sits behind it). No pill backgrounds.
 Right: "Settings" as an outlined 1px `--border` button, 4px radius, 14px text.
 The route title (`h1.route-title`) is removed from the shell; each route sets its own heading.
-Footer: 52px tall, hairline above, ruleset line in Plex Mono 12 `--text`, left-aligned to the
-content edge. Remove the opacity on it.
+Footer: hairline above, two Plex Mono 12 `--text` lines left-aligned to the content edge, each
+led by an uppercase ink label in a 92px gutter — THE GAME (the ruleset) and THE METHOD (basic
+strategy, Hi-Lo, Illustrious 18 + Fab 4). Both strings come from `lib/house.js`, so a player on
+any page can see which game they are being graded against. Remove the opacity on it.
 Skip link and focus ring stay as they are.
 
 ### 5.2 Dashboard (`Dashboard.svelte`)
@@ -130,6 +132,12 @@ Twelve-column grid. Reference: `mockups/Dashboard.html`.
 - **Heatmap thumbnail** (cols 9–12): "Your accuracy, cell by cell" label, the compact `Chart`
   (see 5.8 — a labelled miniature, not a field of bare squares), a three-swatch key, then
   "Open the full chart" as an underlined text link.
+- **House rules and method** (full width, closing the page above a 1px `--rule`): h2 "One game,
+  taught three ways." in Newsreader 26–34/500, then two columns — the rules as a hairline
+  definition list (term 16/500 ink, detail 14 `--text`) in cols 1–6, and the three methods as a
+  numbered list (green Plex Mono numeral, Newsreader 20 name, two 14 `--text` lines) in cols
+  8–12, closed by the "why the ruleset is fixed" note over a hairline. Every word and number of
+  it comes from `lib/house.js`, which spells them from the engine — never retype a rule here.
 
 ### 5.3 Card (`Card.svelte`)
 

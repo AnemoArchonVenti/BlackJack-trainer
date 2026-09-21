@@ -35,7 +35,11 @@ function oneDeck() {
  * `cards` rigs the deck (skips shuffle) for deterministic tests; otherwise seeded Fisher-Yates.
  * penetration is in decks: the cut card sits at penetration*52 cards dealt.
  */
-export function createShoe({ decks = 6, penetration = 4.5, seed = Date.now(), cards } = {}) {
+/** The shoe the trainer deals from (SPEC §1): six decks, cut three-quarters in. */
+export const DECKS = 6;
+export const PENETRATION = 4.5; // decks dealt before the cut card
+
+export function createShoe({ decks = DECKS, penetration = PENETRATION, seed = Date.now(), cards } = {}) {
   let deck;
   if (cards) {
     deck = cards.map((r) => (typeof r === 'object' ? r : card(r)));
