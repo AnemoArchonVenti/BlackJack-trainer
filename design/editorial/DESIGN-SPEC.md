@@ -69,7 +69,8 @@ All values are in `tokens.css`. The palette is small on purpose:
 - Brick `#8a2f2a` (losses, wrong, card backs). Card red `#b8352f` for hearts and diamonds.
 - Chart action colours are five muted tints at the same lightness, always with ink text on top.
 - Heatmap accuracy shading keeps the existing `color-mix` formula in `Chart.svelte`; with the new
-  `--good`/`--bad` it runs from brick to green. Untouched cells are `#e6e1d6`.
+  `--good`/`--bad` it runs from brick to green. Untouched cells are `#dcd4c2` — quiet, but far
+  enough off the `#f4f1ea` ground to read as a cell rather than as nothing.
 
 Dark mode (`prefers-color-scheme: dark`) is provided in `tokens.css` as the warm-charcoal
 variant. Keep the media query; do not add a manual toggle unless asked.
@@ -127,7 +128,8 @@ Twelve-column grid. Reference: `mockups/Dashboard.html`.
   "passed" tag in `--text` on passed ones) · detail + gate in one 14px `--text` line joined by
   " · ". Keep the "suggestions, not locks" sentence as a 14px `--text` line under the list.
 - **Heatmap thumbnail** (cols 9–12): "Your accuracy, cell by cell" label, the compact `Chart`
-  (cells 3px gap, square, no radius), then "Open the full chart" as an underlined text link.
+  (see 5.8 — a labelled miniature, not a field of bare squares), a three-swatch key, then
+  "Open the full chart" as an underlined text link.
 
 ### 5.3 Card (`Card.svelte`)
 
@@ -194,7 +196,15 @@ Toggle "Correct actions / My accuracy": two text buttons side by side, the activ
 Section titles ("Hard totals" etc.) Newsreader 22/500. Column and row headers Plex Mono 12
 `--text`. Cells 32×26px, **no radius**, 2px gap, action letter in Plex Sans 12/600 ink on the
 muted action tints. Accuracy view keeps the `color-mix` shade. Hover: a 1px ink outline on the
-cell (`outline`, not a shadow). Compact (thumbnail) cells: 8px squares, 3px gap, no radius.
+cell (`outline`, not a shadow).
+
+Compact (thumbnail): the same chart at miniature scale, and it keeps every axis — an unlabelled
+grid states nothing. One table carries all three sections so the columns align by construction:
+upcard headers once at the top (Plex Mono 9 `--text`), a section caption per block (Plex Mono 9
+uppercase, 0.12em tracking, ink, over a `--border` hairline), row labels down the left (Plex Mono
+9 `--text`, right-aligned in a 34px gutter), cells 14×11px with a 2px gap and no radius, and
+`line-height: 0` on the cells so the root's 1.5 does not inflate the rows. Below it, a key:
+three 9px swatches reading "not practised / weak / solid".
 Progress route: h1 "Progress" Newsreader 40, the chart on the left (cols 1–8), and on the right
 (cols 9–12) the bucket counts as a hairline list like the dashboard stats column, then
 "Last 50 decisions" and "Bankroll", then the "Click any cell to drill that exact situation"

@@ -65,7 +65,7 @@
   /* ── Grading (semantic pair, distinct from money) ── */
   --good: #1f5c3f;
   --bad: #8a2f2a;
-  --cell-untouched: #e6e1d6;
+  --cell-untouched: #dcd4c2;
 
   /* ── Reference-chart action colours: muted, all the same lightness, ink text on top ── */
   --act-hit: #e9c9c1;       /* dusty rose */
@@ -115,7 +115,7 @@
     --push: #a59c8c;
     --good: #8fcfa4;
     --bad: #d9776e;
-    --cell-untouched: #2a251e;
+    --cell-untouched: #373026;
     --act-hit: #6e3f39;
     --act-stand: #2f5a44;
     --act-double: #6e5c2a;
