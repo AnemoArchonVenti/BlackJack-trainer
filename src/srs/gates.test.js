@@ -38,3 +38,32 @@ test('recordCountdown does not mutate the gates it was handed (store state stays
   assert.deepEqual(before, { countdownBestMs: null, cleanRuns: 0 });
   assert.notEqual(after, before);
 });
+
+test('the gate measures a counting RATE, not how short a run you picked', () => {
+  // Run length is adjustable now, so a raw elapsed time is not comparable between runs. The
+  // best stored is the full-deck equivalent; otherwise shortening the drill looks like speed.
+  let gates = defaults().gates;
+  gates = recordCountdown(gates, {
+    correct: true, clean: true, elapsedMs: 12_000, normalisedMs: 24_000, countsTowardGate: true,
+  });
+  assert.equal(gates.countdownBestMs, 24_000, 'stored as the 52-card pace it was worth');
+
+  gates = recordCountdown(gates, {
+    correct: true, clean: true, elapsedMs: 5_000, normalisedMs: 30_000, countsTowardGate: true,
+  });
+  assert.equal(gates.countdownBestMs, 24_000, 'a faster clock at a slower pace is not a new best');
+  assert.equal(gates.cleanRuns, 2, 'but it was still a clean run');
+});
+
+test('a run too short to be evidence leaves the streak exactly where it was', () => {
+  let gates = recordCountdown(defaults().gates, run(true, 20_000));
+  assert.equal(gates.cleanRuns, 1, 'one honest run banked');
+
+  const short = { correct: true, clean: true, elapsedMs: 2_000, normalisedMs: 10_400, countsTowardGate: false };
+  const after = recordCountdown(gates, short);
+  assert.deepEqual(after, gates, 'practice neither advances the streak nor costs it');
+
+  // Not even a miss on a short run should cost a streak earned on honest ones.
+  const shortMiss = { correct: false, clean: false, elapsedMs: 2_000, normalisedMs: 10_400, countsTowardGate: false };
+  assert.equal(recordCountdown(gates, shortMiss).cleanRuns, 1, 'and a short miss does not reset it');
+});

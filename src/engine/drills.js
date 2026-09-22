@@ -7,9 +7,29 @@ import { createShoe, hiLoTag } from './shoe.js';
 
 // Benchmarks from research §2d (Blackjack Apprenticeship). The BJA page still 403s to automated
 // fetches (SPEC §9 item 2); re-verified 2026-09-17 against corroborating practice literature.
-export const COUNTDOWN_TARGET_MS = 30_000; // pass mark
-export const COUNTDOWN_STRETCH_MS = 25_000; // stretch goal
+// Both times are quoted for a FULL 52-card deck, which is what makes the per-card rate below the
+// only honest way to score a run of any other length.
+export const COUNTDOWN_TARGET_MS = 30_000; // pass mark, for 52 cards
+export const COUNTDOWN_STRETCH_MS = 25_000; // stretch goal, for 52 cards
 export const CLEAN_RUNS_TO_PASS = 5; // clean runs in a row before advancing
+export const FULL_DECK = 52;
+
+/**
+ * The shortest run that counts toward the counting gate.
+ *
+ * ponytail: a convention, not a sourced number. Runs shorter than this still grade and still
+ * show a time — they are useful practice — but they do not extend the clean-run streak, because
+ * a five-card run is not evidence of anything and the gate is meant to mean something.
+ */
+export const COUNTDOWN_GATE_MIN_CARDS = 26;
+
+/** Scale a 52-card benchmark to a run of `cards`. The rate is sourced; the scaling is arithmetic. */
+export const targetMsFor = (cards) => Math.round((COUNTDOWN_TARGET_MS / FULL_DECK) * cards);
+export const stretchMsFor = (cards) => Math.round((COUNTDOWN_STRETCH_MS / FULL_DECK) * cards);
+
+/** A run's time expressed as the 52-card run it is equivalent to, so bests stay comparable. */
+export const normaliseMs = (elapsedMs, cards) =>
+  cards > 0 ? Math.round((elapsedMs * FULL_DECK) / cards) : elapsedMs;
 
 /**
  * (a) Tag speed: flash one card, the player calls +1 / 0 / −1.
@@ -46,23 +66,52 @@ export function createTagDrill({ seed = Date.now(), decks = 1 } = {}) {
 }
 
 /**
- * (b) Deck countdown: stream a full deck one card at a time and end on the correct running count.
- * A balanced deck returns to 0, which is the drill's free self-check (research §2a).
+ * (b) Countdown: stream cards one at a time and end on the correct running count.
+ *
+ * `cards` is how many the run deals, and it is the whole point of the drill being honest.
+ * Counting down a COMPLETE deck always ends on zero — Hi-Lo is balanced, so a full 52 cards sum
+ * to 0 by construction. That property is a genuine self-check at a real table, but as a graded
+ * exercise it is worthless: the answer is known before the first card turns, and typing 0 scores
+ * a clean run without counting anything. Dealing a partial deck leaves the ending count genuinely
+ * unknown, so the only way to answer is to have counted.
+ *
  * The caller owns the clock; `finish` takes the elapsed time so the drill stays pure.
  */
-export function createCountdownDrill({ seed = Date.now(), decks = 1 } = {}) {
+export function createCountdownDrill({ seed = Date.now(), decks = 1, cards = 40 } = {}) {
   const shoe = createShoe({ decks, seed });
+  const total = Math.max(1, Math.min(Math.round(cards), decks * FULL_DECK));
+  const target = targetMsFor(total);
+  const stretch = stretchMsFor(total);
+  let dealt = 0;
+
   return {
+    /** How many this run deals in total, and how many are still to come. */
+    get total() {
+      return total;
+    },
     get remaining() {
-      return shoe.cardsRemaining;
+      return total - dealt;
+    },
+    /** True when the run covers the whole shoe, so the answer is 0 before it starts. */
+    get isFullShoe() {
+      return total === decks * FULL_DECK;
+    },
+    /** This run's pass mark and stretch goal, scaled from the sourced 52-card benchmarks. */
+    get targetMs() {
+      return target;
+    },
+    get stretchMs() {
+      return stretch;
     },
     /** The count so far — ground truth, not shown to the player mid-drill. */
     get truth() {
       return shoe.runningCount;
     },
-    /** next() -> the next card, or null once the deck is spent. */
+    /** next() -> the next card, or null once the run is done. */
     next() {
-      return shoe.cardsRemaining ? shoe.draw() : null;
+      if (dealt >= total) return null;
+      dealt += 1;
+      return shoe.draw();
     },
     /** finish(called, elapsedMs) -> the graded run. "Clean" = right count AND inside the target. */
     finish(called, elapsedMs) {
@@ -72,8 +121,15 @@ export function createCountdownDrill({ seed = Date.now(), decks = 1 } = {}) {
         correct,
         expected,
         elapsedMs,
-        clean: correct && elapsedMs <= COUNTDOWN_TARGET_MS,
-        stretch: elapsedMs <= COUNTDOWN_STRETCH_MS,
+        cards: total,
+        targetMs: target,
+        // The 52-card run this was equivalent to, so a 30-card best and a 52-card best can be
+        // compared at all — and so the gate measures a rate rather than a run length.
+        normalisedMs: normaliseMs(elapsedMs, total),
+        clean: correct && elapsedMs <= target,
+        stretch: elapsedMs <= stretch,
+        // Short runs are practice. They grade, they just do not move the mastery streak.
+        countsTowardGate: total >= COUNTDOWN_GATE_MIN_CARDS,
       };
     },
   };

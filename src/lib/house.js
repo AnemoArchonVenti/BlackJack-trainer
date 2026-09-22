@@ -25,10 +25,12 @@ export const CHART_CELLS =
  * The house rules, exactly as the engine plays them. `term` is the rule; `detail` says what it
  * means at the table, because "S17" tells a beginner nothing on its own.
  */
-export const HOUSE_RULES = [
+export function houseRules({ decks = DECKS, penetrationDecks = PENETRATION } = {}) {
+  const pct = Math.round((penetrationDecks / decks) * 100);
+  return [
   {
-    term: `${DECKS} decks`,
-    detail: `Dealt from a shoe and cut ${cutPct}% in — ${PENETRATION} of the ${DECKS} decks are played before the shuffle.`,
+    term: `${decks} decks`,
+    detail: `Dealt from a shoe and cut ${pct}% in — ${penetrationDecks} of the ${decks} decks are played before the shuffle.`,
   },
   {
     term: 'Dealer stands on soft 17',
@@ -58,7 +60,11 @@ export const HOUSE_RULES = [
     term: 'Late surrender',
     detail: 'Offered on your first two cards, after the dealer has checked for blackjack — half your bet back.',
   },
-];
+  ];
+}
+
+/** The default game, for the static reference pages and anything with no settings to hand. */
+export const HOUSE_RULES = houseRules();
 
 /** The three methods, in the order the guided path teaches them. */
 export const METHODS = [
@@ -79,12 +85,22 @@ export const METHODS = [
   },
 ];
 
-/** Why the ruleset is fixed rather than configurable — worth saying, not just asserting. */
+/** What is adjustable and what is not, and why — worth saying, not just asserting. */
 export const WHY_FIXED =
-  'Every chart and every index here is for this exact game. Index numbers in particular move when the dealer hits soft 17, so the ruleset is fixed rather than configurable — a chart for one game is wrong for another.';
+  'The rules are fixed because a chart for one game is wrong for another: index numbers in particular move when the dealer hits soft 17, so that rule, double after split and late surrender are not switches. The size of the shoe is a different matter — this chart is sourced for four through eight decks, so you can set the deck count and the cut anywhere in that range and every hand is still graded correctly.';
 
-/** The one-line version, for the footer on every page. */
-export const RULE_LINE = `${DECKS} decks · dealer stands on soft 17 · double after split · late surrender · blackjack pays ${pays}`;
+/**
+ * The one-line version, for the footer on every page.
+ *
+ * Deck count is a setting now (4–8, the range the chart is sourced for), so the footer has to be
+ * able to say what is actually being dealt — a line that always claims six decks while the shoe
+ * holds eight is exactly the drift this module exists to prevent.
+ */
+export const ruleLineFor = (decks = DECKS) =>
+  `${decks} decks · dealer stands on soft 17 · double after split · late surrender · blackjack pays ${pays}`;
+
+/** The default game's line, for the static pages. */
+export const RULE_LINE = ruleLineFor();
 
 /** The methods in one line, same place. */
 export const METHOD_LINE = 'Basic strategy · Hi-Lo counting · Illustrious 18 + Fab 4';

@@ -63,9 +63,10 @@ const legend = () =>
 /** The one-line statement of the game, used at the top of every reference page. */
 const rulesNote = () =>
   '<p class="note"><strong>These numbers are for one specific game:</strong> ' +
+  'dealer stands on soft 17, double after split, late surrender, blackjack pays 3:2, dealt from ' +
+  'four to eight decks (' +
   DECKS +
-  ' decks, dealer stands on soft 17, double after split, late surrender, blackjack pays 3:2. ' +
-  'A strategy chart is only correct for the ruleset it was computed for — ' +
+  ' by default). A strategy chart is only correct for the ruleset it was computed for — ' +
   '<a href="/blackjack-rules">what changes when the rules change</a>.</p>';
 
 /** Every page ends by pointing at the drill that practises it. That is the site working. */
@@ -545,13 +546,16 @@ function blackjackRules(page) {
       DECKS +
       ' decks cut ' +
       CUT_PCT +
-      '% in, which is an ordinary, realistic shoe.</p>',
+      '% in by default, which is an ordinary, realistic shoe — and both are settings, so you can practise ' +
+      'counting through eight decks cut at half if that is the game in front of you.</p>',
 
-    '    <h2 id="fixed">Why the ruleset here is fixed</h2>',
+    '    <h2 id="fixed">What you can change, and what you cannot</h2>',
     '    <p>' + esc(WHY_FIXED) + '</p>',
-    '    <p>The engine is rules-aware — it knows what H17 does to the chart — but the trainer only offers a game whose ' +
-      'numbers are fully sourced. Where they are not, it says so rather than filling the gap with a plausible guess. ' +
-      'That is the whole policy, and <a href="/about">this page explains how it is enforced</a>.</p>',
+    '    <p>In practice that means the trainer lets you set the things the chart does not depend on — how many decks ' +
+      'are in the shoe, anywhere from four to eight, and how deep the cut card sits — and refuses the things it does. ' +
+      'The engine is rules-aware, and it knows what H17 does to the chart, but a ruleset is only offered once its ' +
+      'numbers are fully sourced. Where they are not, it says so rather than filling the gap with a plausible guess: ' +
+      '<a href="/about">how that is enforced</a>.</p>',
     cta(
       '/play',
       'Play this game',

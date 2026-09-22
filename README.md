@@ -5,8 +5,10 @@ playing deviations (index plays)**. You play full single-spot rounds, get an end
 explaining each decision, and are guided along a recommended path while free to practise anything.
 Progress is tracked per chart cell with Leitner buckets and an accuracy heatmap.
 
-**Ruleset (fixed):** 6 decks, dealer stands on soft 17, double after split, late surrender. The
-engine is rules-aware so other rulesets can be added once their numbers are sourced.
+**Ruleset:** dealer stands on soft 17, double after split, late surrender — fixed, because a chart
+is only right for the game it was computed for. The **shoe** is not: deck count (4–8) and
+penetration are settings, since research sources this chart for the whole 4–8 range. The engine is
+rules-aware so other rulesets can be added once their numbers are sourced.
 
 No backend, no accounts, no real money. Everything persists to `localStorage`.
 
@@ -28,7 +30,7 @@ npm run images  # re-render the OG card and touch icon (needs Chrome)
 | Mode | What it drills |
 |---|---|
 | **Play** | Full rounds with a flat bet, then a graded recap: ✓/✗ per decision, the correct action, a heuristic "why", and the chart cell behind each miss. |
-| **Counting** | Tag speed, deck countdown (under 30s, five clean runs), and true-count conversion — all graded against the shoe's own count. |
+| **Counting** | Tag speed, a countdown of an adjustable number of cards (the 30s benchmark scales to the length), and true-count conversion — all graded against the shoe's own count. |
 | **Deviations** | Illustrious 18 + Fab 4 flashcards. The count is handed to you; you name the play. |
 | **Integration** | The capstone: keep the count yourself, size the bet by it, make the index plays. Graded per shoe on count, bets, play and deviations. |
 | **Progress** | One grid, two faces — the canonical strategy chart, and the same grid coloured by your accuracy. Click any cell to drill it. |
@@ -51,6 +53,39 @@ scripts/
 
 **`engine/` and `srs/` contain zero Svelte imports** and are unit-tested in Node. The strategy
 engine is the single grading oracle — no mode re-implements strategy, counting or the indices.
+
+## Settings
+
+`src/lib/settings.js` is the single source of truth for everything adjustable: each setting's
+default, its range and what it means. The panel **renders that schema** rather than keeping a
+second copy, and `setSetting` clamps through the same module, so a dragged slider, a typed
+number and a hand-edited `localStorage` blob all land in the same allowed range.
+
+| Setting | Range | Notes |
+|---|---|---|
+| Decks in the shoe | 4–8 | The whole range the chart is sourced for, so every hand is still graded correctly. |
+| Penetration | 50–90% | Stored as a *fraction*, not a deck count, so it survives a change of shoe size. |
+| Starting bankroll | $100–$100k | Plus a Reset, because losing the roll used to be terminal. |
+| Cards per countdown | 10–52 | See below. |
+| Shoe size for true count | 1–8 decks | Only affects the arithmetic you practise, never a chart. |
+| Tag speed pace | fast / normal / slow / manual | Manual waits for you instead of auto-advancing. |
+
+**Not adjustable:** S17, DAS and surrender. The engine knows the H17 cell changes, but the
+no-DAS and no-surrender deltas exist in research only as prose rather than tables, so the
+trainer cannot grade those games correctly and does not offer them.
+
+### Why the countdown deals a partial deck
+
+It used to deal all 52. Hi-Lo is balanced, so a full deck sums to **zero by construction** — the
+answer was known before the first card turned, and typing `0` scored a clean run without
+counting anything. Worse, the elapsed clock was only stopped by a click the UI stopped offering
+once the last card was dealt, so runs were graded at `0.0s`, which is inside every target there
+is. Between the two, the counting mastery gate could be cleared without counting or speed.
+
+A run now deals a configurable number of cards, so the ending count is genuinely unknown, and
+the clock stops on the last card. The sourced 30s/25s benchmarks are quoted for 52 cards, so
+they scale by the per-card rate, and a run's best time is stored as its **52-card equivalent** —
+otherwise shortening the drill would look like getting faster.
 
 ## The public site
 
@@ -90,4 +125,7 @@ independently from research and compares cell for cell, so a drift between the t
   deviations with a notice rather than inventing numbers (research §3c).
 - **The bet ramp's rungs are a convention.** The 1–15 spread and "table minimum at TC ≤ +1" are
   sourced; the individual rungs are not, so the trainer shows the ramp rather than hiding it.
+- **The countdown gate floor is a convention.** Runs under 26 cards grade and show a time but do
+  not move the clean-run streak; the 26 is a judgement call, not a sourced number. Scaling the
+  30s benchmark by the per-card rate is arithmetic on a sourced figure, not a new one.
 - **No UI test framework in v1** (SPEC §8) — the tests cover the pure layers.

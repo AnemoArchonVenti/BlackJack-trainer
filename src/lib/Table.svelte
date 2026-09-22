@@ -14,13 +14,13 @@
   import HandView from './HandView.svelte';
   import ChipStack from './ChipStack.svelte';
   import Review from './Review.svelte';
-  import { session, gradeRound, persist } from './session.svelte.js';
+  import { session, gradeRound, persist, shoeSettings } from './session.svelte.js';
   import CellDrill from './CellDrill.svelte';
   import { cue } from './audio.js';
   import { money } from './money.js';
 
   // Bankroll is the persisted one (#5): the table owns it during a round, the session owns it across reloads.
-  const t = createTable({ shoe: createShoe({ seed: Date.now() }), bankroll: session.bankroll });
+  const t = createTable({ shoe: createShoe({ ...shoeSettings(), seed: Date.now() }), bankroll: session.bankroll });
   const ACTIONS = { H: 'Hit', S: 'Stand', D: 'Double', P: 'Split', R: 'Surrender' };
   const SHOE_SIZE = t.shoe.cardsRemaining; // a full shoe, read before a card leaves it
 

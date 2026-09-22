@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createTagDrill, createCountdownDrill, createTrueCountDrill,
   COUNTDOWN_TARGET_MS, COUNTDOWN_STRETCH_MS, CLEAN_RUNS_TO_PASS,
+  COUNTDOWN_GATE_MIN_CARDS, FULL_DECK, targetMsFor, normaliseMs,
 } from './drills.js';
 
 test('drill benchmarks match research §2d (re-verified 2026-09-17)', () => {
@@ -30,26 +31,76 @@ test('tag drill flashes one card and grades the call against the Hi-Lo tags', ()
   assert.deepEqual(seen.slice(0, 1), [card.value], 'same seed deals the same cards');
 });
 
-test('countdown drill streams a full deck and grades the final running count', () => {
-  const d = createCountdownDrill({ seed: 3 });
+test('countdown deals a PARTIAL deck, so the answer is not free', () => {
+  // The bug this replaces: the drill dealt all 52 cards, Hi-Lo is balanced, so the answer was
+  // always 0 — and typing 0 scored a clean run without counting a single card.
+  const d = createCountdownDrill({ seed: 3, cards: 40 });
   let dealt = 0;
   while (d.next()) dealt += 1;
-  assert.equal(dealt, 52, 'a single deck, one card at a time');
-  assert.equal(d.next(), null, 'the deck is exhausted');
-  assert.equal(d.truth, 0, 'a balanced deck counts back to zero — the self-check (research §2a)');
+  assert.equal(dealt, 40, 'it deals exactly the run length asked for');
+  assert.equal(d.next(), null, 'and then stops, with cards still unseen');
+  assert.equal(d.remaining, 0);
+  assert.equal(d.isFullShoe, false, 'a partial run, so the ending count is genuinely unknown');
 
-  const clean = d.finish(0, 22_000);
-  assert.deepEqual(clean, { correct: true, expected: 0, elapsedMs: 22_000, clean: true, stretch: true });
+  // Across a spread of seeds the ending count must actually vary, or the drill is still guessable.
+  const endings = new Set();
+  for (let seed = 1; seed <= 25; seed++) {
+    const run = createCountdownDrill({ seed, cards: 40 });
+    while (run.next());
+    endings.add(run.truth);
+  }
+  assert.ok(endings.size > 4, `40-card runs end on ${endings.size} different counts, not one`);
+  assert.ok(!(endings.size === 1 && endings.has(0)), 'and certainly not always zero');
+});
 
-  const slow = createCountdownDrill({ seed: 3 });
-  while (slow.next());
-  const late = slow.finish(0, 41_000);
-  assert.equal(late.correct, true, 'the count was right...');
-  assert.equal(late.clean, false, '...but over 30s it is not a clean run');
+test('countdown grades the count it actually reached', () => {
+  const d = createCountdownDrill({ seed: 3, cards: 40 });
+  while (d.next());
+  const truth = d.truth;
 
-  const miscount = createCountdownDrill({ seed: 4 });
-  while (miscount.next());
-  assert.deepEqual(miscount.finish(3, 12_000), { correct: false, expected: 0, elapsedMs: 12_000, clean: false, stretch: true });
+  const clean = d.finish(truth, 15_000);
+  assert.equal(clean.correct, true);
+  assert.equal(clean.expected, truth);
+  assert.equal(clean.cards, 40);
+  assert.equal(clean.clean, true, 'right count, inside the scaled target');
+
+  const miss = createCountdownDrill({ seed: 3, cards: 40 });
+  while (miss.next());
+  assert.equal(miss.finish(truth + 1, 15_000).correct, false, 'one off is wrong');
+});
+
+test('the 52-card benchmark scales to the run length rather than being ignored', () => {
+  assert.equal(targetMsFor(FULL_DECK), COUNTDOWN_TARGET_MS, 'a full deck keeps the sourced 30s');
+  assert.equal(targetMsFor(26), Math.round(COUNTDOWN_TARGET_MS / 2), 'half a deck, half the time');
+
+  const short = createCountdownDrill({ seed: 5, cards: 26 });
+  assert.equal(short.targetMs, targetMsFor(26));
+  while (short.next());
+  // 20s over 26 cards is a comfortable full-deck pace, but it is over the 15s this run allows.
+  assert.equal(short.finish(short.truth, 20_000).clean, false, 'scored at its own length, not 52');
+
+  // And a time is stored as the full-deck run it is equivalent to, so bests stay comparable.
+  assert.equal(normaliseMs(15_000, 26), 30_000, '15s over half a deck is a 30s pace');
+  assert.equal(normaliseMs(30_000, FULL_DECK), 30_000, 'a full deck normalises to itself');
+});
+
+test('a run too short to be evidence does not move the mastery gate', () => {
+  const tiny = createCountdownDrill({ seed: 9, cards: 10 });
+  while (tiny.next());
+  const result = tiny.finish(tiny.truth, 3_000);
+  assert.equal(result.correct, true, 'it still grades — short runs are practice');
+  assert.equal(result.countsTowardGate, false, 'but the streak does not move on ten cards');
+
+  const enough = createCountdownDrill({ seed: 9, cards: COUNTDOWN_GATE_MIN_CARDS });
+  while (enough.next());
+  assert.equal(enough.finish(enough.truth, 5_000).countsTowardGate, true, 'at the floor it counts');
+});
+
+test('a full-shoe run says so, because its answer is zero before it starts', () => {
+  const full = createCountdownDrill({ seed: 2, decks: 1, cards: FULL_DECK });
+  while (full.next());
+  assert.equal(full.isFullShoe, true, 'the UI uses this to warn that the answer is not a test');
+  assert.equal(full.truth, 0, 'a balanced deck still counts back to zero — the real self-check');
 });
 
 test('true-count drill poses a real shoe position and grades RC / decks remaining', () => {

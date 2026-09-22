@@ -8,9 +8,10 @@
   // count you type — is set big in the serif, because that number is the drill.
   import {
     createTagDrill, createCountdownDrill, createTrueCountDrill,
-    COUNTDOWN_TARGET_MS, COUNTDOWN_STRETCH_MS, CLEAN_RUNS_TO_PASS,
+    CLEAN_RUNS_TO_PASS, COUNTDOWN_GATE_MIN_CARDS, FULL_DECK, targetMsFor, stretchMsFor,
   } from '../engine/drills.js';
-  import { session, recordCountdownRun } from './session.svelte.js';
+  import { session, recordCountdownRun, openSettings } from './session.svelte.js';
+  import { TAG_PACE_MS } from './settings.js';
   import Card from './Card.svelte';
   import { suitFor } from './suits.js';
   import { cue } from './audio.js';
@@ -30,21 +31,30 @@
     tag.card = tag.drill.deal();
     tag.feedback = null;
   }
+  // How long the answer stays on screen before the next card. A miss always lingers longer than
+  // a hit, so the right tag has time to register; at 'manual' nothing advances on its own.
+  const pace = $derived(TAG_PACE_MS[session.settings.tagPace] ?? TAG_PACE_MS.normal);
   function tagAnswer(value) {
     if (!tag.card || tag.feedback) return;
     const r = tag.drill.answer(value);
     tag.feedback = r;
     Object.assign(tag, tag.drill.stats);
     cue(r.correct ? 'correct' : 'wrong');
-    setTimeout(tagNext, r.correct ? 220 : 900); // a wrong answer lingers so the right tag registers
+    const wait = r.correct ? pace.correct : pace.wrong;
+    if (wait !== null) setTimeout(tagNext, wait);
   }
 
   // ── (b) Deck countdown ──────────────────────────────────────────────────────────────────
-  let cd = $state({ drill: null, card: null, left: 52, startedAt: 0, elapsed: 0, called: 0, result: null });
+  let cd = $state({ drill: null, card: null, left: 0, total: 0, startedAt: 0, elapsed: 0, called: 0, result: null });
+  // A run deals the configured number of cards rather than a whole deck. That is the difference
+  // between a drill and a formality: a full deck is balanced, so its answer is zero before the
+  // first card turns, and 'type 0' scored a clean run without counting anything.
+  const runCards = $derived(session.settings.countdownCards);
   function cdStart() {
-    cd.drill = createCountdownDrill({});
+    cd.drill = createCountdownDrill({ cards: runCards });
     cd.card = null;
-    cd.left = 52;
+    cd.left = cd.drill.remaining;
+    cd.total = cd.drill.total;
     cd.startedAt = 0;
     cd.elapsed = 0;
     cd.called = 0;
@@ -58,8 +68,13 @@
       cd.card = card;
       cd.left = cd.drill.remaining;
       cue('deal');
+      // The clock has to stop on the LAST CARD, not on a further click. Once `left` hits zero the
+      // markup swaps the Flip button for the answer box, so there is no click left to make — and
+      // the run was being graded at 0.0s, which is inside every target there is. Between that and
+      // a full deck always answering 0, a clean run needed neither counting nor speed.
+      if (cd.left === 0) cd.elapsed = performance.now() - cd.startedAt;
     } else {
-      cd.elapsed = performance.now() - cd.startedAt;
+      cd.elapsed ||= performance.now() - cd.startedAt;
     }
   }
   function cdFinish() {
@@ -69,9 +84,14 @@
   }
 
   // ── (c) True-count conversion ───────────────────────────────────────────────────────────
-  let tc = $state({ drill: null, question: null, answer: 0, result: null, asked: 0, correct: 0 });
+  let tc = $state({ drill: null, question: null, answer: 0, result: null, asked: 0, correct: 0, decks: 0 });
   function tcNext() {
-    tc.drill ??= createTrueCountDrill({});
+    // Rebuild when the configured shoe changes, or questions keep coming from the old size.
+    if (tc.decks !== session.settings.trueCountDecks) {
+      tc.drill = null;
+      tc.decks = session.settings.trueCountDecks;
+    }
+    tc.drill ??= createTrueCountDrill({ decks: session.settings.trueCountDecks });
     tc.question = tc.drill.deal();
     tc.answer = 0;
     tc.result = null;
@@ -87,7 +107,9 @@
   function onkey(e) {
     if (e.target.tagName === 'INPUT') return;
     if (drill === 'tag') {
-      if (e.key === '+' || e.key === '=' || e.key === 'ArrowUp') tagAnswer(1);
+      // At manual pace the space bar is what asks for the next card.
+      if (e.key === ' ' && pace.correct === null && tag.feedback) { e.preventDefault(); tagNext(); }
+      else if (e.key === '+' || e.key === '=' || e.key === 'ArrowUp') tagAnswer(1);
       else if (e.key === '0' || e.key === 'ArrowRight') tagAnswer(0);
       else if (e.key === '-' || e.key === 'ArrowDown') tagAnswer(-1);
     } else if (drill === 'countdown' && e.key === ' ') {
@@ -112,7 +134,10 @@
 
   {#if drill === 'tag'}
     <div class="panel">
-      <p class="lead">Call the Hi-Lo tag as fast as you can. 2–6 are +1, 7–9 are 0, tens and aces are −1.</p>
+      <p class="lead">
+        Call the Hi-Lo tag as fast as you can. 2–6 are +1, 7–9 are 0, tens and aces are −1.
+        <button class="tweak" onclick={openSettings}>Change the pace</button>
+      </p>
       <div class="stage">
         <div class="inner">
           {#if tag.card}
@@ -126,6 +151,9 @@
         <button class="action" onclick={() => tagAnswer(1)} disabled={!tag.card}>+1 <kbd>+</kbd></button>
         <button class="action" onclick={() => tagAnswer(0)} disabled={!tag.card}>0 <kbd>0</kbd></button>
         <button class="action" onclick={() => tagAnswer(-1)} disabled={!tag.card}>−1 <kbd>−</kbd></button>
+        {#if pace.correct === null && tag.feedback}
+          <button class="action next" onclick={tagNext}>Next <kbd>space</kbd></button>
+        {/if}
       </div>
       <p class="verdict" aria-live="polite">
         {#if tag.feedback}
@@ -139,17 +167,30 @@
   {:else if drill === 'countdown'}
     <div class="panel">
       <p class="lead">
-        Count down a full deck and end on the right running count — a balanced deck comes back to zero.
-        Target under {secs(COUNTDOWN_TARGET_MS)} ({secs(COUNTDOWN_STRETCH_MS)} is the stretch goal),
-        {CLEAN_RUNS_TO_PASS} clean runs in a row to pass.
+        Count {runCards} cards off a shuffled deck and end on the right running count.
+        Target under {secs(targetMsFor(runCards))} ({secs(stretchMsFor(runCards))} is the stretch
+        goal), {CLEAN_RUNS_TO_PASS} clean runs in a row to pass.
+        <button class="tweak" onclick={openSettings}>Change the length</button>
       </p>
+      {#if runCards >= FULL_DECK}
+        <p class="warn">
+          A full deck always ends on zero — Hi-Lo is balanced, so the answer is known before the
+          first card turns. That is the self-check you use at a real table, but it is not a test.
+          Shorten the run to be graded on something you had to count.
+        </p>
+      {:else if runCards < COUNTDOWN_GATE_MIN_CARDS}
+        <p class="warn">
+          Runs under {COUNTDOWN_GATE_MIN_CARDS} cards are practice: they grade, but they do not
+          move the streak.
+        </p>
+      {/if}
       <div class="stage">
         <div class="inner">
           {#if !cd.drill}
-            <button class="primary" onclick={cdStart}>Start a deck</button>
+            <button class="primary" onclick={cdStart}>Start a run of {runCards}</button>
           {:else if cd.left > 0}
             {#if cd.card}<Card rank={cd.card.rank} suit={suitFor(cd.card)} />{/if}
-            <p class="readout"><b>{cd.left}</b> <span class="unit">cards left</span></p>
+            <p class="readout"><b>{cd.left}</b> <span class="unit">of {cd.total} left</span></p>
             <button class="primary" onclick={cdFlip}>{cd.card ? 'Next' : 'Flip'} <kbd>space</kbd></button>
           {:else if !cd.result}
             <p class="readout"><b>{secs(cd.elapsed)}</b> <span class="unit">elapsed</span></p>
@@ -178,7 +219,11 @@
     </div>
   {:else}
     <div class="panel">
-      <p class="lead">Divide the running count by the decks remaining, then round to the nearest whole true count.</p>
+      <p class="lead">
+        Divide the running count by the decks remaining, then round to the nearest whole true count.
+        Posed from a {session.settings.trueCountDecks}-deck shoe.
+        <button class="tweak" onclick={openSettings}>Change the shoe</button>
+      </p>
       <div class="stage">
         <div class="inner tcq">
           {#if tc.question}
@@ -213,6 +258,18 @@
 </section>
 
 <style>
+  /* A link-looking button that jumps to the setting the drill in front of you depends on. */
+  .tweak {
+    background: none; border: 0; padding: 0; margin-left: 6px;
+    font: inherit; font-size: 0.95em; color: var(--text-h); cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+  .tweak:hover { border-bottom-color: var(--accent); }
+  .warn {
+    border-left: 2px solid var(--accent); padding: 2px 0 2px 12px; margin: 0 0 var(--s-3);
+    font-size: 14px; color: var(--text); max-width: 60ch;
+  }
+
   .counting {
     max-width: 46rem; margin: 0 auto; padding: 40px var(--pad) 48px;
     display: flex; flex-direction: column; gap: var(--s-4); text-align: left;

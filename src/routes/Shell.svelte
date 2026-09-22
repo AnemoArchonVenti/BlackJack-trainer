@@ -13,8 +13,9 @@
   // filled background anywhere in the nav. The shell no longer prints a route title; each route
   // sets its own heading, so the page starts with the words that route wants to lead with.
   import { ROUTES, parseRoute, hrefFor, legacyHashPath } from './router.js';
-  import { RULE_LINE, METHOD_LINE } from '../lib/house.js';
+  import { ruleLineFor, METHOD_LINE } from '../lib/house.js';
   import { REFERENCE_PAGES, SITE } from '../site.js';
+  import { session, ui, toggleSettings, closeSettings } from '../lib/session.svelte.js';
   import Dashboard from './Dashboard.svelte';
   import Settings from '../lib/Settings.svelte';
   import Table from '../lib/Table.svelte';
@@ -33,7 +34,6 @@
   let path = $state(browser ? location.pathname : '/');
   const route = $derived(parseRoute(path));
   const View = $derived(VIEWS[route.id]);
-  let settingsOpen = $state(false);
 
   /** Send the address bar somewhere without a page load, and take the view with it. */
   function go(to, { replace = false } = {}) {
@@ -41,7 +41,7 @@
     if (replace) history.replaceState({}, '', to);
     else history.pushState({}, '', to);
     path = location.pathname;
-    settingsOpen = false;
+    closeSettings();
     // A route change is a new page to a person using a screen reader, so move focus to it.
     document.getElementById('main')?.focus();
     window.scrollTo(0, 0);
@@ -119,14 +119,14 @@
       {/each}
     </nav>
 
-    <button class="settings-toggle" aria-expanded={settingsOpen} onclick={() => (settingsOpen = !settingsOpen)}>
+    <button class="settings-toggle" aria-expanded={ui.settingsOpen} onclick={toggleSettings}>
       Settings
     </button>
   </div>
 </header>
 
-{#if settingsOpen}
-  <Settings onClose={() => (settingsOpen = false)} />
+{#if ui.settingsOpen}
+  <Settings onClose={closeSettings} />
 {/if}
 
 <main id="main" tabindex="-1">
@@ -136,7 +136,7 @@
 <!-- On every page, because a player should never have to guess which game they are being graded
      against. Both lines come from lib/house.js, which spells them from the engine. -->
 <footer class="footer">
-  <p><span class="tag">The game</span>{RULE_LINE}</p>
+  <p><span class="tag">The game</span>{ruleLineFor(session.settings.decks)}</p>
   <p><span class="tag">The method</span>{METHOD_LINE}</p>
   <!-- The written pages. They are static documents rather than app routes, so these are ordinary
        links the browser loads — and the path a reader takes in from a search result. -->

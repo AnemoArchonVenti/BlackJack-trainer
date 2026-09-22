@@ -13,7 +13,7 @@
   import { recommendedUnits, RAMP, MAX_SPREAD } from '../engine/betting.js';
   import { scoreShoe, COUNT_CARD_ID, BET_CARD_ID } from '../engine/integration.js';
   import { gradeBet } from '../engine/betting.js';
-  import { session, gradeCards, persist } from './session.svelte.js';
+  import { session, gradeCards, persist, shoeSettings } from './session.svelte.js';
   import { cue } from './audio.js';
   import HandView from './HandView.svelte';
   import { money } from './money.js';
@@ -38,7 +38,7 @@
 
   function newTable() {
     return createTable({
-      shoe: createShoe({ decks: 6, penetration: 4.5, seed: Date.now() }),
+      shoe: createShoe({ ...shoeSettings(), seed: Date.now() }),
       bankroll: session.bankroll,
       rules: RULES,
     });

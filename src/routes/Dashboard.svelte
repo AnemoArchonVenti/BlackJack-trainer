@@ -13,7 +13,8 @@
   import { CLEAN_RUNS_TO_PASS } from '../engine/drills.js';
   import { STRATEGY_ACCURACY, STRATEGY_WINDOW } from '../srs/gates.js';
   import { money } from '../lib/money.js';
-  import { HOUSE_RULES, METHODS, WHY_FIXED } from '../lib/house.js';
+  import { houseRules, METHODS, WHY_FIXED } from '../lib/house.js';
+  import { penetrationDecks } from '../lib/settings.js';
 
   const counts = $derived(bucketCounts());
   const recent = $derived(recentAccuracy(50));
@@ -136,7 +137,7 @@
     <div class="col rules">
       <span class="kicker">The house rules</span>
       <dl>
-        {#each HOUSE_RULES as rule (rule.term)}
+        {#each houseRules({ decks: session.settings.decks, penetrationDecks: penetrationDecks(session.settings) }) as rule (rule.term)}
           <div class="rule">
             <dt>{rule.term}</dt>
             <dd>{rule.detail}</dd>

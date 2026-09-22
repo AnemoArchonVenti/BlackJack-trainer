@@ -4,16 +4,27 @@
 
 /**
  * recordCountdown(gates, result) -> new gates.
- * `result` is a drills.js countdown run. A clean run (right count AND inside the 30s target)
- * extends the streak and can set a new best; anything else resets the streak to zero and is
+ *
+ * `result` is a drills.js countdown run. A clean run (right count AND inside the target for its
+ * length) extends the streak and can set a new best; a miss resets the streak to zero and is
  * never eligible as a best time — a fast miscount is not a fast count.
+ *
+ * Two things keep the gate meaningful now that the run length is adjustable:
+ *
+ *   · The best time stored is the run's 52-card EQUIVALENT, not its raw elapsed time. Otherwise
+ *     shortening the drill would look like getting faster, and a 20-card best would sit
+ *     permanently below any honest full-deck time.
+ *   · A run too short to be evidence (`countsTowardGate`) leaves the streak exactly where it was
+ *     — neither advanced nor reset. It is practice, and practice should not cost you a streak.
  */
-export function recordCountdown(gates, { clean, elapsedMs }) {
+export function recordCountdown(gates, { clean, elapsedMs, normalisedMs, countsTowardGate = true }) {
+  if (!countsTowardGate) return gates;
   if (!clean) return { ...gates, cleanRuns: 0 };
+  const pace = normalisedMs ?? elapsedMs;
   const best = gates.countdownBestMs;
   return {
     ...gates,
-    countdownBestMs: best === null || elapsedMs < best ? elapsedMs : best,
+    countdownBestMs: best === null || pace < best ? pace : best,
     cleanRuns: gates.cleanRuns + 1,
   };
 }

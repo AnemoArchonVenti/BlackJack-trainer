@@ -8,6 +8,7 @@ import { cellId } from '../engine/strategy.js';
 import { recordCountdown, evaluateGates, recommendNext } from '../srs/gates.js';
 import { setAudioEnabled } from './audio.js';
 import { resolveMotion, prefersReducedMotion } from './motion.js';
+import { clampOne, penetrationDecks } from './settings.js';
 
 const saved = load();
 const progress = createProgress(saved.progress);
@@ -24,11 +25,44 @@ export const session = $state({
 // Settings that reach outside the store get mirrored on boot (#10).
 setAudioEnabled(session.settings.audio);
 
-/** Change one setting, mirror it where it matters, and save. */
+/**
+ * Chrome state that is not worth persisting but more than one component needs. The settings panel
+ * is opened by the shell's own button and by the drills that point at a setting they depend on,
+ * so "is it open" cannot live inside the shell.
+ */
+export const ui = $state({ settingsOpen: false });
+export const openSettings = () => (ui.settingsOpen = true);
+export const closeSettings = () => (ui.settingsOpen = false);
+export const toggleSettings = () => (ui.settingsOpen = !ui.settingsOpen);
+
+/**
+ * Change one setting, mirror it where it matters, and save.
+ * The value goes through the schema's clamp, so a slider, a typed number and a hand-edited blob
+ * all land in the same allowed range — the panel never has to be the thing that validates.
+ */
 export function setSetting(key, value) {
-  session.settings = { ...session.settings, [key]: value };
-  if (key === 'audio') setAudioEnabled(value);
+  const clamped = clampOne(key, value);
+  if (clamped === undefined) return session.settings; // not a setting we know about
+  session.settings = { ...session.settings, [key]: clamped };
+  if (key === 'audio') setAudioEnabled(clamped);
   persist();
+  return session.settings;
+}
+
+/**
+ * Put the bankroll back to what the table is set to start with.
+ * Without this a bad session is terminal: lose the roll and the felt has nothing to bet with,
+ * and clearing site data was the only way back.
+ */
+export function resetBankroll() {
+  session.bankroll = session.settings.bankroll;
+  persist();
+  return session.bankroll;
+}
+
+/** The shoe arguments the table and the integration drill should deal from, per settings. */
+export function shoeSettings() {
+  return { decks: session.settings.decks, penetration: penetrationDecks(session.settings) };
 }
 
 /** The motion numbers for the current preference, with the OS setting layered on top (#10 F5). */
