@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/build-seo.js",
+    "build:app": "vite build",
     "preview": "vite preview",
-    "test": "node --test \"src/**/*.test.js\""
+    "fonts": "node scripts/fetch-fonts.cjs",
+    "test": "node --test \"src/**/*.test.js\"",
+    "images": "node scripts/make-images.cjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

@@ -2,19 +2,57 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="description" content="Practice basic strategy, Hi-Lo counting and index plays." />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Twenty-One — Blackjack Trainer</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+
+    <!-- Everything between these markers is rewritten per route by scripts/build-seo.js, which
+         reads the title and description straight off the route table in src/routes/router.js.
+         What stands here is the dashboard's copy, so `npm run dev` shows the real thing. -->
+    <!--seo:start-->
+    <title>Blackjack Trainer — Basic Strategy, Hi-Lo Counting and Index Plays</title>
+    <meta
+      name="description"
+      content="A free 21 trainer that drills basic strategy, Hi-Lo card counting and the Illustrious 18 — full hands, graded every decision, with the chart cell behind each miss. No signup, no real money."
     />
+    <link rel="canonical" href="https://twentyonetrainer.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Twenty-One" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://twentyonetrainer.com/" />
+    <meta property="og:title" content="Blackjack Trainer — Basic Strategy, Hi-Lo Counting and Index Plays" />
+    <meta
+      property="og:description"
+      content="A free 21 trainer that drills basic strategy, Hi-Lo card counting and the Illustrious 18 — full hands, graded every decision, with the chart cell behind each miss."
+    />
+    <meta property="og:image" content="https://twentyonetrainer.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!--seo:end-->
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#111311" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- The four faces the first screen needs. The italic Newsreader is left to load lazily:
+         it dresses the wordmark and pull quotes, and is not worth blocking the critical path. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/newsreader-var.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/ibm-plex-sans-var.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/ibm-plex-mono-400.woff2" />
+
+    <script type="module" src="/src/main.js"></script>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <noscript>
+      <p style="font: 17px/1.6 system-ui, sans-serif; max-width: 38rem; margin: 3rem auto; padding: 0 1.5rem">
+        The trainer deals hands and grades them in your browser, so it needs JavaScript switched on.
+        The written pages work without it:
+        <a href="/basic-strategy-chart">the basic strategy chart</a>,
+        <a href="/card-counting">how Hi-Lo counting works</a>, and
+        <a href="/illustrious-18">the Illustrious 18 index plays</a>.
+      </p>
+    </noscript>
   </body>
 </html>

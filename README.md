@@ -15,8 +15,12 @@ No backend, no accounts, no real money. Everything persists to `localStorage`.
 ```sh
 npm install
 npm run dev     # dev server
-npm run build   # production bundle
+npm run build   # production bundle + the generated pages, sitemap and robots.txt
+npm run preview # serve the build — the written pages only exist after one
 npm test        # engine + srs unit tests (node:test, no framework)
+
+npm run fonts   # re-download the webfonts (by hand; output is committed)
+npm run images  # re-render the OG card and touch icon (needs Chrome)
 ```
 
 ## Modes
@@ -36,11 +40,40 @@ src/
   engine/    strategy, charts, deviations, shoe, hand, drills, betting, reasons, integration
   srs/       leitner buckets, per-cell progress, mastery gates, localStorage
   lib/       shared Svelte UI, motion, audio, the live session
-  routes/    app shell, hash router, dashboard
+  routes/    app shell, path router, dashboard
+  site.js    the origin, and the reference pages that exist alongside the trainer
+scripts/
+  build-seo.js     post-build: per-route HTML, the written pages, sitemap, robots, headers
+  seo/pages.js     the written pages, generated from the engine
+  fetch-fonts.cjs  self-hosts the webfonts
+  make-images.cjs  renders the OG card and the touch icon
 ```
 
 **`engine/` and `srs/` contain zero Svelte imports** and are unit-tested in Node. The strategy
 engine is the single grading oracle — no mode re-implements strategy, counting or the indices.
+
+## The public site
+
+The trainer is an app, and an app is close to invisible to a search engine: one URL, almost no
+text. So the build also produces a **site** around it — see [DEPLOY.md](DEPLOY.md) for hosting
+and for what to do about Search Console.
+
+Two things make that work:
+
+**Routing is path-based.** Every mode is a real URL (`/counting`, not `#/counting`), and
+`scripts/build-seo.js` writes one HTML file per route with its own title, description, canonical
+link and Open Graph tags. Old hash links still resolve — the shell rewrites them once.
+
+**The written pages are generated from the engine.** `/basic-strategy-chart`, `/card-counting`,
+`/illustrious-18`, `/blackjack-rules` and `/about` are static HTML with no JavaScript, and every
+number on them is imported from the same modules that grade a hand — `engine/charts.js`,
+`engine/deviations.js`, `engine/betting.js`, `lib/house.js`. Nothing numeric is typed into
+`scripts/seo/pages.js`. A cell that changes in the engine changes on the public chart in the same
+build, which is the same no-drift rule the test suite enforces against research, extended to the
+pages a stranger reads first.
+
+Prose figures on those pages come from the research document and nowhere else. If a number is
+not sourced there, the page does not claim it.
 
 ## Where the numbers come from
 

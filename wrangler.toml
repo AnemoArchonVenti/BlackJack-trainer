@@ -1,0 +1,11 @@
+# Cloudflare Pages project configuration.
+#
+# Keeping this in the repo means the build settings are version-controlled rather than living
+# only in the dashboard, where nobody can see them change. Cloudflare reads it on every deploy.
+#
+# The build command itself (`npm run build`) and the Node version are set in the dashboard when
+# the project is first connected to the repo — see DEPLOY.md.
+
+name = "twenty-one"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-22"
