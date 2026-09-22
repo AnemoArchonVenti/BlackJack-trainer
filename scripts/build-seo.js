@@ -233,9 +233,10 @@ const refFoot = () =>
       (r) => '          <a href="' + r.path + '">' + esc(r.label) + '</a>',
     ),
     '        </div>',
-    '        <p>Free practice software for the card game. No wagering, no real money, no accounts —',
-    '          your progress stays in this browser. Card counting is legal; casinos are private',
-    '          property and may still bar you. <a href="/about">Where the numbers come from</a>.</p>',
+    '        <p>Free practice software for the card game. No wagering, no real money. An account is',
+    '          optional and only syncs your progress — <a href="/privacy">what is stored</a>. Card',
+    '          counting is legal; casinos are private property and may still bar you.',
+    '          <a href="/about">Where the numbers come from</a>.</p>',
     '      </footer>',
   ].join('\n');
 

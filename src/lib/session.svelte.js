@@ -8,10 +8,11 @@ import { cellId } from '../engine/strategy.js';
 import { recordCountdown, evaluateGates, recommendNext } from '../srs/gates.js';
 import { setAudioEnabled } from './audio.js';
 import { resolveMotion, prefersReducedMotion } from './motion.js';
-import { clampOne, penetrationDecks } from './settings.js';
+import { clampOne, clamp as clampSettings, penetrationDecks } from './settings.js';
+import { queuePush } from './account.svelte.js';
 
 const saved = load();
-const progress = createProgress(saved.progress);
+let progress = createProgress(saved.progress);
 
 // `revision` is the reactivity handle for the non-reactive progress module: every read below
 // touches it, every grade bumps it, so $derived views recompute without cloning the SRS state.
@@ -71,6 +72,9 @@ export function motion() {
 }
 
 export function persist() {
+  // Local first, always: the browser copy is the working one and must not wait on a network.
+  // The push to an account, if there is one, is debounced and happens after the fact.
+  queuePush();
   return save({
     version: 1,
     bankroll: session.bankroll,
@@ -78,6 +82,24 @@ export function persist() {
     gates: session.gates,
     progress: progress.toJSON(),
   });
+}
+
+/**
+ * Replace the entire live session with a profile pulled from an account.
+ *
+ * Called only after account.svelte.js has decided this profile should win — either the server
+ * had progress and this browser did not, or the person was asked and chose it. Rebuilding the
+ * SRS instance rather than reloading the page keeps whatever drill is on screen from blinking.
+ */
+export function adoptProfile(profile) {
+  const base = load(null); // defaults only — no storage read, this is about the incoming blob
+  const merged = { ...base, ...profile };
+  session.bankroll = merged.bankroll ?? base.bankroll;
+  session.settings = clampSettings(merged.settings);
+  session.gates = { ...base.gates, ...merged.gates };
+  progress = createProgress(merged.progress);
+  setAudioEnabled(session.settings.audio);
+  session.revision += 1;
 }
 
 /** Grade one cell into the SRS. Returns the cell's new bucket. */

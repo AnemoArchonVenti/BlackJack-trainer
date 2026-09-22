@@ -85,6 +85,16 @@ export const REFERENCE_PAGES = [
       'Every chart cell, Hi-Lo tag and index play here traces to a cited source, and the test suite fails the build if the code and the research disagree. What that means, what is deliberately missing, and why.',
     priority: '0.5',
   },
+  {
+    slug: 'privacy',
+    path: '/privacy',
+    nav: 'Privacy',
+    heading: 'What this site stores about you',
+    title: 'Privacy — What Twenty-One Stores, and What It Does Not',
+    description:
+      'The trainer works with no account and keeps your progress in your own browser. Sign in and one extra thing is stored: your email address and your progress. No tracking, no analytics, no advertising, and deletion in two clicks.',
+    priority: '0.3',
+  },
 ];
 
 /** pageBySlug(slug) -> the reference page record. */

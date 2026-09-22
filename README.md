@@ -54,6 +54,51 @@ scripts/
 **`engine/` and `srs/` contain zero Svelte imports** and are unit-tested in Node. The strategy
 engine is the single grading oracle — no mode re-implements strategy, counting or the indices.
 
+## Accounts (optional)
+
+The trainer works with **no account at all** — progress in `localStorage`, no network, nothing
+gated. Signing in with Google adds one thing: a copy of that progress on the server, so it
+survives clearing the browser and appears on another device.
+
+```
+worker/index.js   the /api/* routes; everything else is served straight from the asset store
+worker/auth.js    Google OAuth (authorization code + PKCE, server-side) and session cookies
+worker/db.js      every SQL statement, all parameter-bound
+migrations/       the D1 schema
+src/lib/api.js            browser half — thin, same-origin, never throws
+src/lib/account.svelte.js sync state and the conflict rule
+```
+
+**No password is ever created or stored.** Google does the identifying; the server keeps a
+Google subject id, an email address to show back to you, the progress blob, and a *hash* of the
+session token. Deletion is one call and cascades. What is stored is documented publicly on
+`/privacy`, generated like every other reference page.
+
+Because sign-in is a server-side redirect rather than Google's JavaScript SDK, no third-party
+script runs on the page and the CSP stays at `script-src 'self'`, `connect-src 'self'`.
+
+### The bit that could lose someone's work
+
+`localStorage` stays the working copy; the server is a mirror written after the fact, debounced.
+Two devices — or one device that played signed out and then signed in — can both hold progress.
+Where one side is empty the other simply wins. Where **both** have real progress and they
+disagree, the app asks rather than picking, and touches neither side until answered.
+
+Last-write-wins is a real limitation, not a solved problem: play on two devices simultaneously
+and the later save overwrites rather than merging cell by cell. `hasRealProgress` is what decides
+whether a person gets asked, and it is tested accordingly.
+
+### Running it
+
+```sh
+npx wrangler d1 migrations apply twenty-one-db --remote
+npx wrangler secret put GOOGLE_CLIENT_SECRET   # paste at the prompt; never in the repo
+# GOOGLE_CLIENT_ID is public and lives in wrangler.toml
+```
+
+With no credentials set, `/api/me` reports `configured: false` and the UI offers no sign-in at
+all rather than a button that answers 503.
+
 ## Settings
 
 `src/lib/settings.js` is the single source of truth for everything adjustable: each setting's

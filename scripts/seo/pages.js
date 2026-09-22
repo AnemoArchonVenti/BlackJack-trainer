@@ -638,9 +638,12 @@ function about(page) {
     '    </ul>',
 
     '    <h2 id="privacy">Your data</h2>',
-    '    <p>There are no accounts and there is no server. Everything the trainer knows about you — which cells you have ' +
-      'mastered, your accuracy heatmap, your settings — is stored in your own browser and never leaves it. Clearing ' +
-      'your browser data clears your progress, and there is no way for anyone, including us, to recover it.</p>',
+    '    <p>You can use the whole trainer without an account, and if you do, everything it knows about you — which ' +
+      'cells you have mastered, your accuracy heatmap, your settings — is stored in your own browser and never ' +
+      'leaves it. Nothing is gated behind signing in.</p>',
+    '    <p>Signing in with Google adds one thing: a copy of that same progress on the server, so it survives clearing ' +
+      'your browser and appears on your other devices. No password is created, because Google does the identifying. ' +
+      'The full list of what is stored, and how to delete it, is on <a href="/privacy">the privacy page</a>.</p>',
 
     '    <h2 id="not">What this is not</h2>',
     '    <p>This is practice software for a card game. There is no wagering, no real money, no prizes and nothing to ' +
@@ -667,6 +670,103 @@ function about(page) {
   };
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// /privacy
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+function privacy(page) {
+  const body = [
+    '    <h1>' + esc(page.heading) + '</h1>',
+    '    <p class="lede">Short version: the trainer works with no account at all, and if you use it ' +
+      'that way nothing about you leaves your browser. Signing in stores your email address and your ' +
+      'progress, and nothing else. There is no tracking, no analytics and no advertising anywhere on ' +
+      'this site.</p>',
+
+    '    <h2 id="without">Without an account</h2>',
+    '    <p>Every mode works signed out. Your progress — which chart cells you have mastered, your ' +
+      'accuracy heatmap, your counting streaks, your settings — is written to your own browser&rsquo;s ' +
+      'local storage and is never sent anywhere. Clearing your browser data deletes it, and nobody, ' +
+      'including us, has a copy to restore.</p>',
+
+    '    <h2 id="with">With an account</h2>',
+    '    <p>Signing in exists for one reason: so that progress survives clearing your browser and ' +
+      'appears on your other devices. It unlocks nothing. Here is the complete list of what is ' +
+      'stored on the server when you do:</p>',
+    table({
+      caption: 'Everything stored on the server',
+      head: ['Why it exists'],
+      rows: [
+        ['<strong>Your email address</strong>', 'So the app can show you which account you are signed in as. It is not used for anything else, and there is no mailing list to be added to.'],
+        ['<strong>A Google account identifier</strong>', 'The opaque id Google issues for you. It is what recognises you as a returning user, and it means a changed email address does not lose your progress.'],
+        ['<strong>Your progress</strong>', 'The same data the browser-only version keeps locally: mastered cells, accuracy, streaks, bankroll and settings.'],
+        ['<strong>A session token</strong>', 'Proof that this browser is signed in. Only a one-way hash of it is stored, so the table is useless to anyone who reads it.'],
+      ],
+    }),
+    '    <p><strong>No password is ever created or stored</strong>, because Google does the ' +
+      'identifying. There is no credential here to be leaked. The app asks Google for two things ' +
+      'only — a subject id and an email address — and declines the name, profile picture and ' +
+      'everything else it offers.</p>',
+
+    '    <h2 id="not">What is not collected</h2>',
+    '    <ul>',
+    '      <li><strong>No analytics.</strong> No Google Analytics, no Plausible, no page-view counting ' +
+      'of any kind. This site does not know how many people visit it.</li>',
+    '      <li><strong>No tracking or advertising cookies.</strong> The only cookie set is the one ' +
+      'that keeps you signed in, and it only exists once you sign in.</li>',
+    '      <li><strong>No third-party scripts.</strong> Nothing on the page is loaded from anyone ' +
+      'else&rsquo;s server — not fonts, not scripts, not embeds. The site&rsquo;s ' +
+      'Content-Security-Policy forbids it, which you can check in your browser&rsquo;s dev tools.</li>',
+    '      <li><strong>Nothing is sold or shared.</strong> There is no third party to share it with.</li>',
+    '    </ul>',
+
+    '    <h2 id="delete">Deleting your account</h2>',
+    '    <p>Settings &rarr; Account &rarr; Delete account. It removes your email address, your Google ' +
+      'identifier, your sessions and your stored progress from the server immediately and permanently. ' +
+      'There is no soft delete and no recovery window, and you do not have to email anyone to ask.</p>',
+    '    <p>Signing out, by contrast, leaves everything where it is — including the copy in your ' +
+      'browser, so signing out does not cost you your progress.</p>',
+
+    '    <h2 id="where">Where it is kept</h2>',
+    '    <p>The site and its database run on Cloudflare. Sign-in is handled by Google, so your ' +
+      'interaction with Google&rsquo;s sign-in screen is covered by Google&rsquo;s own privacy policy ' +
+      'rather than this one.</p>',
+
+    '    <h2 id="changes">Changes</h2>',
+    '    <p>If what is stored ever changes, this page changes with it, and the change is visible in ' +
+      'the site&rsquo;s public commit history rather than announced by a banner nobody reads.</p>',
+    cta('/', 'Back to the trainer', 'No account needed, and none asked for.'),
+  ].join(String.fromCharCode(10));
+
+  const faqs = [
+    {
+      q: 'Do I need an account to use the blackjack trainer?',
+      a: 'No. Every drill and every mode works signed out, with your progress saved in your own browser. An account only adds a copy on the server so your progress survives clearing your browser and appears on other devices.',
+    },
+    {
+      q: 'Does this site store my password?',
+      a: 'No password is ever created or stored. Signing in is handled by Google, so the only thing proving who you are lives with Google.',
+    },
+    {
+      q: 'Does this site use analytics or tracking cookies?',
+      a: 'No. There is no analytics of any kind and no advertising. The only cookie is the one that keeps you signed in, and it only exists if you choose to sign in.',
+    },
+    {
+      q: 'How do I delete my data?',
+      a: 'Settings, then Account, then Delete account. It removes your email address, your Google identifier and your stored progress from the server immediately and permanently.',
+    },
+  ];
+
+  return {
+    body,
+    jsonLd: graph(
+      webSiteNode,
+      breadcrumb([{ name: 'Twenty-One', path: '/' }, { name: 'Privacy', path: page.path }]),
+      faqPage(faqs),
+    ),
+    faqs,
+  };
+}
+
 /** Every reference page body, keyed by the slug in src/site.js. */
 export const BUILDERS = {
   'basic-strategy-chart': basicStrategyChart,
@@ -674,4 +774,5 @@ export const BUILDERS = {
   'illustrious-18': illustrious18,
   'blackjack-rules': blackjackRules,
   about,
+  privacy,
 };

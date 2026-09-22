@@ -15,6 +15,7 @@
   import { targetMsFor } from '../engine/drills.js';
   import { money } from './money.js';
   import { cue } from './audio.js';
+  import Account from './Account.svelte';
 
   let { onClose } = $props();
 
@@ -120,6 +121,7 @@
         {/if}
       </section>
     {/each}
+    <Account />
   </div>
 
   {#if osReduced && effective !== s.motion}

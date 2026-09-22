@@ -15,7 +15,8 @@
   import { ROUTES, parseRoute, hrefFor, legacyHashPath } from './router.js';
   import { ruleLineFor, METHOD_LINE } from '../lib/house.js';
   import { REFERENCE_PAGES, SITE } from '../site.js';
-  import { session, ui, toggleSettings, closeSettings } from '../lib/session.svelte.js';
+  import { session, ui, toggleSettings, closeSettings, adoptProfile } from '../lib/session.svelte.js';
+  import { account, initAccount, resolveConflict } from '../lib/account.svelte.js';
   import Dashboard from './Dashboard.svelte';
   import Settings from '../lib/Settings.svelte';
   import Table from '../lib/Table.svelte';
@@ -75,6 +76,12 @@
     go(href);
   }
 
+  // Ask the server whether this browser is signed in, once, after the app has already rendered
+  // from localStorage. Nothing waits on it — the trainer works signed out and offline.
+  $effect(() => {
+    if (browser) initAccount(adoptProfile);
+  });
+
   $effect(() => {
     if (!browser) return;
     // An old '#/play' bookmark from the hash-routed build: rewrite it to the real URL once, so
@@ -129,6 +136,28 @@
   <Settings onClose={closeSettings} />
 {/if}
 
+<!-- Two copies of your progress disagree. Nothing is touched until this is answered, because
+     silently picking one of them throws the other away. -->
+{#if account.conflict}
+  <div class="conflict" role="dialog" aria-modal="true" aria-labelledby="conflict-title">
+    <div class="sheet">
+      <h2 id="conflict-title">Two sets of progress</h2>
+      <p>
+        This browser has progress that your account does not, and your account has progress this
+        browser does not. Keeping one means overwriting the other, so pick which is the real one.
+      </p>
+      <div class="choices">
+        <button class="primary" onclick={() => resolveConflict('local')}>
+          Keep this browser&rsquo;s progress
+        </button>
+        <button class="primary" onclick={() => resolveConflict('remote')}>
+          Use my account&rsquo;s progress
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <main id="main" tabindex="-1">
   <View />
 </main>
@@ -149,13 +178,36 @@
   <p class="fine">
     <span class="tag">Note</span>
     <span class="body">
-      Free practice software. No wagering, no real money, no accounts — everything you do stays in
-      this browser. Card counting is legal; casinos are private property and may still bar you.
+      Free practice software. No wagering and no real money. An account is optional and only syncs
+      your progress — <a href="/privacy">what is stored</a>. Card counting is legal; casinos are
+      private property and may still bar you.
     </span>
   </p>
 </footer>
 
 <style>
+  /* The conflict prompt is the one modal in the app, because it is the one moment where
+     carrying on without an answer would destroy something. */
+  .conflict {
+    position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+    background: rgba(28, 26, 23, 0.55); padding: var(--s-3);
+  }
+  .conflict .sheet {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-md);
+    max-width: 34rem; padding: var(--s-4); box-shadow: none;
+  }
+  .conflict h2 {
+    font-family: var(--heading); font-weight: 500; font-size: 1.5rem; margin: 0 0 var(--s-2);
+    color: var(--text-h);
+  }
+  .conflict p { margin: 0 0 var(--s-3); line-height: 1.6; color: var(--text); }
+  .conflict .choices { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+  .conflict .primary {
+    padding: 9px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
+    background: none; color: var(--text-h); font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .conflict .primary:hover { background: var(--hover); border-color: var(--accent); }
+
   .skip {
     position: absolute; left: -999px; top: 0; z-index: 10;
     background: var(--panel); color: var(--text-h); padding: 0.5rem 0.9rem;

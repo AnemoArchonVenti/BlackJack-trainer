@@ -3,22 +3,16 @@
 # Keeping this in the repo means the deploy settings are version-controlled rather than living
 # only in the dashboard, where nobody can see them change.
 #
-# This is a Workers **static assets** deployment, not a Pages project. Cloudflare has folded Pages
-# into Workers: `wrangler pages deploy` now delegates here anyway, and the classic Pages path
-# survives only behind a --force flag. Since the site is a directory of static files with no
-# server-side code, an assets-only Worker is exactly the right shape — there is no `main`, because
-# there is no script to run.
+# This is a Workers deployment serving static assets, not a Pages project. Cloudflare has folded
+# Pages into Workers: `wrangler pages deploy` now delegates here anyway, and the classic Pages
+# path survives only behind a --force flag.
 #
-# What the asset settings do:
-#   · html_handling defaults to serving /play from dist/play.html and redirecting /play.html to
-#     /play, which is precisely the clean-URL behaviour the build's per-route files expect.
-#   · not_found_handling serves dist/404.html with a real 404 status. The alternative,
-#     single-page-application, would return the app shell with a 200 for every unknown URL and
-#     manufacture soft-404s for Google to index.
-#
-# dist/_headers is read from the built output and carries the caching and security headers.
+# The site is still a directory of static files. The Worker exists only for the /api/* routes
+# that optional accounts need, and `run_worker_first` below is what keeps it that way — every
+# page, stylesheet and font is served straight from the asset store without the Worker running.
 
 name = "twenty-one"
+main = "worker/index.js"
 compatibility_date = "2026-09-22"
 
 # No *.workers.dev URL. The site has a real domain, and a second address serving identical pages
@@ -36,4 +30,23 @@ routes = [
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+# A real 404 with a real status. The alternative, single-page-application, would answer every
+# unknown URL with the app shell and a 200 and manufacture soft-404s for Google to index.
 not_found_handling = "404-page"
+# Only the API reaches the Worker. Everything else is served from the asset store directly, which
+# is why adding accounts costs the reading pages nothing.
+run_worker_first = ["/api/*"]
+
+# Accounts and synced progress. Schema in migrations/; apply with:
+#   npx wrangler d1 migrations apply twenty-one-db --remote
+[[d1_databases]]
+binding = "twenty_one_db"
+database_name = "twenty-one-db"
+database_id = "c4ab7eeb-be12-47a2-893f-d720997a3d03"
+
+[vars]
+# The OAuth client id is public by design — it travels in the redirect to Google on every
+# sign-in, so it belongs in version control. The matching SECRET does not, and is set with:
+#   npx wrangler secret put GOOGLE_CLIENT_SECRET
+GOOGLE_CLIENT_ID = ""
