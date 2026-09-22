@@ -33,28 +33,50 @@ Verified available at time of writing, if you would rather pick another:
 
 ---
 
-## 2. Cloudflare Pages
+## 2. Cloudflare Workers (static assets)
 
-**[you]** In the Cloudflare dashboard, **Workers & Pages → Create → Pages → Connect to Git**,
-and pick `AnemoArchonVenti/BlackJack-trainer`.
+The site deploys as a **Workers static-assets** project, not a Pages project. Cloudflare has
+folded Pages into Workers: `wrangler pages deploy` now delegates into the Workers path anyway,
+and creating a classic Pages project survives only behind a `--force` flag. Since this is a
+directory of static files with no server-side code, an assets-only Worker is the right shape —
+`wrangler.toml` has no `main`, because there is no script to run.
 
-Build settings:
+Everything is declared in `wrangler.toml`, including the custom domains, so a deploy attaches
+them itself and there is no dashboard state that can drift from the repo:
 
-| Setting | Value |
-|---|---|
-| Framework preset | None |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node version | 22 (set env var `NODE_VERSION` = `22`, or rely on `.nvmrc`) |
+```toml
+workers_dev   = false                      # no *.workers.dev duplicate of the site
+routes        = [ twentyonetrainer.com, www.twentyonetrainer.com ]   # both, as custom domains
+[assets]
+directory            = "./dist"
+not_found_handling   = "404-page"          # a real 404, not a soft one
+```
 
-`wrangler.toml` in the repo root already declares the output directory, so the dashboard should
-pick most of this up on its own.
+Deploying is then one command:
 
-Then **Custom domains → Set up a custom domain**, and add both `twentyonetrainer.com` and
-`www.twentyonetrainer.com`. Cloudflare issues the certificate and redirects `www` to the apex
-automatically once both are attached.
+```sh
+npm run build
+npx wrangler deploy
+```
 
-After that, every push to `main` deploys. Pull requests get their own preview URL.
+`not_found_handling` matters more than it looks. The alternative, `single-page-application`,
+answers every unknown URL with the app shell and a 200 — which manufactures soft-404s for Google
+to index. Every route here is a real file, so anything that misses is genuinely missing.
+
+### One dashboard setting the CLI token cannot reach
+
+**[you]** `wrangler login` grants `zone:read`, not zone write, so this one is manual and is worth
+doing once: **SSL/TLS → Edge Certificates → Always Use HTTPS → on**.
+
+Without it, `http://twentyonetrainer.com` serves the site directly over plaintext instead of
+redirecting to HTTPS, which is both a security gap and a duplicate of every page on an
+unencrypted origin.
+
+### Auto-deploy on push (optional)
+
+**[you]** Workers Builds will rebuild on every push to `main`: in the Worker's settings, connect
+the GitHub repo `AnemoArchonVenti/BlackJack-trainer` with build command `npm run build`. Until
+that is set up, deploys are the two commands above.
 
 ### What the build produces
 
@@ -118,14 +140,15 @@ rules first — a removed post is worse than no post.
 
 ---
 
-## 5. Deploying by hand
-
-Rarely needed, since Git push deploys. But:
+## 5. Deploying
 
 ```sh
 npm run build
-npx wrangler pages deploy dist --project-name=twenty-one
+npx wrangler deploy
 ```
+
+That uploads `dist/` and re-attaches the routes declared in `wrangler.toml`. `wrangler whoami`
+says who you are logged in as; `wrangler login` fixes it if the answer is nobody.
 
 ---
 

@@ -1,11 +1,39 @@
-# Cloudflare Pages project configuration.
+# Cloudflare deployment configuration.
 #
-# Keeping this in the repo means the build settings are version-controlled rather than living
-# only in the dashboard, where nobody can see them change. Cloudflare reads it on every deploy.
+# Keeping this in the repo means the deploy settings are version-controlled rather than living
+# only in the dashboard, where nobody can see them change.
 #
-# The build command itself (`npm run build`) and the Node version are set in the dashboard when
-# the project is first connected to the repo — see DEPLOY.md.
+# This is a Workers **static assets** deployment, not a Pages project. Cloudflare has folded Pages
+# into Workers: `wrangler pages deploy` now delegates here anyway, and the classic Pages path
+# survives only behind a --force flag. Since the site is a directory of static files with no
+# server-side code, an assets-only Worker is exactly the right shape — there is no `main`, because
+# there is no script to run.
+#
+# What the asset settings do:
+#   · html_handling defaults to serving /play from dist/play.html and redirecting /play.html to
+#     /play, which is precisely the clean-URL behaviour the build's per-route files expect.
+#   · not_found_handling serves dist/404.html with a real 404 status. The alternative,
+#     single-page-application, would return the app shell with a 200 for every unknown URL and
+#     manufacture soft-404s for Google to index.
+#
+# dist/_headers is read from the built output and carries the caching and security headers.
 
 name = "twenty-one"
-pages_build_output_dir = "dist"
 compatibility_date = "2026-09-22"
+
+# No *.workers.dev URL. The site has a real domain, and a second address serving identical pages
+# is a duplicate a search engine has to be told to ignore. The routes below attach the domain on
+# deploy, so there is no dashboard step and no way for the config here to drift from what is live.
+#
+# www is attached as well rather than left dead, and every page's canonical tag points at the
+# apex, which is how a search engine is told which of the two is the real one.
+workers_dev = false
+
+routes = [
+  { pattern = "twentyonetrainer.com", custom_domain = true },
+  { pattern = "www.twentyonetrainer.com", custom_domain = true },
+]
+
+[assets]
+directory = "./dist"
+not_found_handling = "404-page"
