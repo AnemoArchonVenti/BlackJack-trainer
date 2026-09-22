@@ -12,9 +12,16 @@
   // edge, with a fine 45° hatch over it.
   import { motion } from './session.svelte.js';
 
+  // What the corner prints, and what a screen reader says. They differ: the face is a single
+  // glyph because that is how a card is printed, but "K of ♠" is not something a screen reader
+  // can pronounce — it reads the letter and then silence where the suit should be.
+  const SPOKEN_RANK = { A: 'ace', J: 'jack', Q: 'queen', K: 'king' };
+  const SPOKEN_SUIT = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' };
+
   let { rank, suit = '♠', faceDown = false } = $props();
   const red = $derived(suit === '♥' || suit === '♦');
-  const label = $derived(rank === 'A' ? 'A' : String(rank));
+  const label = $derived(String(rank));
+  const spoken = $derived(`${SPOKEN_RANK[rank] ?? rank} of ${SPOKEN_SUIT[suit] ?? suit}`);
   const flipMs = motion().duration;
 </script>
 
@@ -23,7 +30,7 @@
   class:down={faceDown}
   style:--flip-ms="{flipMs}ms"
   role="img"
-  aria-label={faceDown ? 'face-down card' : `${label} of ${suit}`}
+  aria-label={faceDown ? 'face-down card' : spoken}
 >
   <div class="face front" class:red>
     <span class="corner tl">{label}<br /><span class="suit">{suit}</span></span>

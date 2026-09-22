@@ -12,6 +12,7 @@
   // said in the caption, so nothing on the felt is outlined or boxed.
   import { fly, fade } from 'svelte/transition';
   import Card from './Card.svelte';
+  import { suitFor } from './suits.js';
   import { value, isSoft } from '../engine/hand.js';
   import { motion } from './session.svelte.js';
   import { money } from './money.js';
@@ -28,7 +29,6 @@
     net = null,
   } = $props();
 
-  const SUITS = ['♠', '♥', '♣', '♦']; // cosmetic only
   const total = $derived(hideHole ? value([hand[0]]) : value(hand));
 
   const OUTCOME = { win: 'Won', lose: 'Lost', push: 'Push' };
@@ -71,7 +71,7 @@
   <div class="cards">
     {#each hand as card, i (i)}
       <div class="slot" in:dealIn={{ index: i }}>
-        <Card rank={card.rank} suit={SUITS[i % 4]} faceDown={hideHole && i === 1} />
+        <Card rank={card.rank} suit={suitFor(card)} faceDown={hideHole && i === 1} />
       </div>
     {/each}
   </div>

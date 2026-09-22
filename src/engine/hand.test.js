@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { value, isSoft, isPair, legalMoves, handFor } from './hand.js';
+import { value, isSoft, isPair, legalMoves, handFor, TEN_RANKS } from './hand.js';
 import { cellId, cells } from './strategy.js';
 
 // Card builder: rank 2..10 or 'A'; tens all value 10, A value 11 (SPEC §3 Card type).
-const c = (rank) => ({ rank, value: rank === 'A' ? 11 : rank });
+const c = (rank) => ({ rank, value: rank === 'A' ? 11 : TEN_RANKS.includes(rank) ? 10 : rank });
 
 test('value: hard total sums faces', () => {
   assert.equal(value([c(10), c(6)]), 16);
@@ -53,8 +53,21 @@ test('handFor() builds a representative hand for a chart cell (heatmap click-to-
   // Spot-check the shapes a player would expect to be dealt.
   assert.deepEqual(handFor({ type: 'soft', key: 7, up: 3 }).hand.map((c) => c.rank), ['A', 7]);
   assert.deepEqual(handFor({ type: 'pair', key: 11, up: 6 }).hand.map((c) => c.rank), ['A', 'A']);
-  assert.equal(handFor({ type: 'hard', key: 16, up: 10 }).upcard.rank, 10);
+  // Column 10 is any ten-valued card, so the drill deals it a face. What must hold is the value,
+  // and that the same cell always shows the same one — a flashcard that changes its picture
+  // between reviews reads as a different question.
+  const tenUp = handFor({ type: 'hard', key: 16, up: 10 }).upcard;
+  assert.equal(tenUp.value, 10, 'column 10 is a ten-valued card');
+  assert.ok(TEN_RANKS.includes(tenUp.rank), `${tenUp.rank} is a ten-valued rank`);
+  assert.equal(handFor({ type: 'hard', key: 16, up: 10 }).upcard.rank, tenUp.rank, 'stable per cell');
   assert.equal(handFor({ type: 'hard', key: 16, up: 11 }).upcard.rank, 'A', 'column 11 is the ace');
+
+  // A jack and a queen are a splittable pair, and the pair row is dealt as two different faces.
+  const tens = handFor({ type: 'pair', key: 10, up: 6 }).hand;
+  assert.equal(tens.length, 2);
+  assert.deepEqual(tens.map((c) => c.value), [10, 10], 'both ten-valued');
+  assert.notEqual(tens[0].rank, tens[1].rank, 'dealt as two different faces, as a table would');
+  assert.ok(isPair(tens), 'and still a pair, because isPair compares value');
 
   const hard = handFor({ type: 'hard', key: 12, up: 4 }).hand;
   assert.equal(value(hard), 12);

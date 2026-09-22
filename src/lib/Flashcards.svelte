@@ -14,6 +14,10 @@
   import { handFor } from '../engine/hand.js';
   import { gradeCell, cellStats, persist, dueFirst } from './session.svelte.js';
   import HandView from './HandView.svelte';
+
+  // Hoisted, not inlined in the template: a fresh object each render would be a fresh card,
+  // and the insurance prompt's ace would change suit every time the card re-drew.
+  const DEALER_ACE = [{ rank: 'A', value: 11 }];
   import { cue } from './audio.js';
 
   const RULES = { decks: 6, h17: false, das: true, surrender: true }; // v1 fixed ruleset (SPEC §1)
@@ -116,7 +120,7 @@
         <div class="stage">
           <div class="inner">
             {#if card.kind === 'insurance'}
-              <HandView hand={[{ rank: 'A', value: 11 }]} role="dealer" />
+              <HandView hand={DEALER_ACE} role="dealer" />
             {:else}
               <HandView hand={[card.upcard]} role="dealer" />
               <HandView hand={card.hand} />

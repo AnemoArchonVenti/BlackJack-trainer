@@ -1,10 +1,11 @@
 // Seedable 6-deck shoe (SPEC §4.3). Pure/deterministic given a seed; zero Svelte.
 // Ground-truth backbone every play/counting mode grades against.
-import { value, isSoft } from './hand.js';
+import { value, isSoft, card, TEN_RANKS } from './hand.js';
 
-/** Hi-Lo tag (research §2a): 2–6 = +1, 7–9 = 0, 10/A = −1. Keyed by card value. */
+/** Hi-Lo tag (research §2a): 2–6 = +1, 7–9 = 0, 10/A = −1. Keyed by card VALUE, never by rank,
+ *  which is what makes a jack, queen, king and ten one card as far as the count is concerned. */
 export function hiLoTag(card) {
-  const v = card.value; // 2..10 for numbers/tens, 11 for ace
+  const v = card.value; // 2..10 for numbers and the four ten-value ranks, 11 for ace
   return v <= 6 ? 1 : v <= 9 ? 0 : -1;
 }
 
@@ -19,12 +20,13 @@ function mulberry32(seed) {
   };
 }
 
-const card = (rank) => ({ rank, value: rank === 'A' ? 11 : rank });
-
-// One deck: 2..9 (one each), four tens (10/J/Q/K all value 10), one ace — ×4 suits.
-// ponytail: no `suit` field; #10 rendering can add it, it's additive.
+// One deck: 2..9, the four ten-value ranks (10/J/Q/K), one ace — ×4 suits.
+// The faces are dealt as themselves rather than as four more tens. Nothing in the engine can
+// tell the difference, but the player can: recognising a king as a −1 on sight is part of the
+// skill the counting drills exist to build, and a table that only ever shows 10s never asks.
+// ponytail: no `suit` field; the UI assigns one, since strategy never depends on it.
 function oneDeck() {
-  const ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 'A'];
+  const ranks = [2, 3, 4, 5, 6, 7, 8, 9, ...TEN_RANKS, 'A'];
   const deck = [];
   for (let s = 0; s < 4; s++) for (const r of ranks) deck.push(card(r));
   return deck;

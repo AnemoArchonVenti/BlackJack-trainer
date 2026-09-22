@@ -12,6 +12,7 @@
   } from '../engine/drills.js';
   import { session, recordCountdownRun } from './session.svelte.js';
   import Card from './Card.svelte';
+  import { suitFor } from './suits.js';
   import { cue } from './audio.js';
 
   const DRILLS = [
@@ -20,8 +21,6 @@
     ['truecount', 'True count'],
   ];
   let drill = $state('tag');
-  const SUITS = ['♠', '♥', '♦', '♣'];
-  const suit = () => SUITS[Math.floor(Math.random() * 4)]; // cosmetic; tags don't depend on suit
   const secs = (ms) => `${(ms / 1000).toFixed(1)}s`;
 
   // ── (a) Tag speed ───────────────────────────────────────────────────────────────────────
@@ -117,7 +116,7 @@
       <div class="stage">
         <div class="inner">
           {#if tag.card}
-            <Card rank={tag.card.rank} suit={suit()} />
+            <Card rank={tag.card.rank} suit={suitFor(tag.card)} />
           {:else}
             <button class="primary" onclick={tagNext}>Start</button>
           {/if}
@@ -149,7 +148,7 @@
           {#if !cd.drill}
             <button class="primary" onclick={cdStart}>Start a deck</button>
           {:else if cd.left > 0}
-            {#if cd.card}<Card rank={cd.card.rank} suit={suit()} />{/if}
+            {#if cd.card}<Card rank={cd.card.rank} suit={suitFor(cd.card)} />{/if}
             <p class="readout"><b>{cd.left}</b> <span class="unit">cards left</span></p>
             <button class="primary" onclick={cdFlip}>{cd.card ? 'Next' : 'Flip'} <kbd>space</kbd></button>
           {:else if !cd.result}
