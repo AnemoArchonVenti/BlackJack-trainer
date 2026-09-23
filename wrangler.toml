@@ -49,4 +49,4 @@ database_id = "c4ab7eeb-be12-47a2-893f-d720997a3d03"
 # The OAuth client id is public by design — it travels in the redirect to Google on every
 # sign-in, so it belongs in version control. The matching SECRET does not, and is set with:
 #   npx wrangler secret put GOOGLE_CLIENT_SECRET
-GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_ID = "662165287048-lnmqb259j3rfecj983pfesmdb8i5fnqe.apps.googleusercontent.com"
