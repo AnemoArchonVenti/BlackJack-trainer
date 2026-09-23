@@ -18,7 +18,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROUTES } from '../src/routes/router.js';
-import { REFERENCE_PAGES, SITE, urlFor } from '../src/site.js';
+import { REFERENCE_PAGES, SITE, ACCOUNTS_ENABLED, urlFor } from '../src/site.js';
 import { esc, seoBlock, graph, webSiteNode } from './seo/html.js';
 import { BUILDERS } from './seo/pages.js';
 
@@ -233,10 +233,15 @@ const refFoot = () =>
       (r) => '          <a href="' + r.path + '">' + esc(r.label) + '</a>',
     ),
     '        </div>',
-    '        <p>Free practice software for the card game. No wagering, no real money. An account is',
-    '          optional and only syncs your progress — <a href="/privacy">what is stored</a>. Card',
-    '          counting is legal; casinos are private property and may still bar you.',
-    '          <a href="/about">Where the numbers come from</a>.</p>',
+    ACCOUNTS_ENABLED
+      ? '        <p>Free practice software for the card game. No wagering, no real money. An account is ' +
+        'optional and only syncs your progress — <a href="/privacy">what is stored</a>. Card counting ' +
+        'is legal; casinos are private property and may still bar you. ' +
+        '<a href="/about">Where the numbers come from</a>.</p>'
+      : '        <p>Free practice software for the card game. No wagering, no real money, no accounts — ' +
+        'your progress stays in this browser (<a href="/privacy">what is stored</a>). Card counting is ' +
+        'legal; casinos are private property and may still bar you. ' +
+        '<a href="/about">Where the numbers come from</a>.</p>',
     '      </footer>',
   ].join('\n');
 

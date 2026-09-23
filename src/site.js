@@ -13,6 +13,21 @@
 /** Swap this one string to move the site to a different domain. No trailing slash. */
 export const ORIGIN = 'https://twentyonetrainer.com';
 
+/**
+ * Whether this deployment offers sign-in, and therefore whether the written pages should describe
+ * it. Must match whether GOOGLE_CLIENT_ID is set in wrangler.toml.
+ *
+ * Currently FALSE. Google Safe Browsing flagged the site as "Deceptive pages" the day after the
+ * domain was registered, naming no sample URLs — a classifier judgement on a domain with no
+ * history, not detected content. A day-old site offering a Google sign-in looks like a phishing
+ * kit, so sign-in is off while the review runs.
+ *
+ * The code is all still here. This flag exists so the PAGES do not describe a feature the site
+ * does not currently have: a privacy policy explaining a Google sign-in, on a site with no sign-in,
+ * is both untrue and precisely the wrong thing for a reviewer to read.
+ */
+export const ACCOUNTS_ENABLED = false;
+
 export const SITE = {
   origin: ORIGIN,
   name: 'Twenty-One',

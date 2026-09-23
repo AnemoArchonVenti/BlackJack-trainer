@@ -49,4 +49,12 @@ database_id = "c4ab7eeb-be12-47a2-893f-d720997a3d03"
 # The OAuth client id is public by design — it travels in the redirect to Google on every
 # sign-in, so it belongs in version control. The matching SECRET does not, and is set with:
 #   npx wrangler secret put GOOGLE_CLIENT_SECRET
-GOOGLE_CLIENT_ID = "662165287048-lnmqb259j3rfecj983pfesmdb8i5fnqe.apps.googleusercontent.com"
+# TEMPORARILY UNSET. Google Safe Browsing flagged the site as "Deceptive pages" the day after
+# the domain was registered, naming no sample URLs — a site-level classifier call, not detected
+# content. A day-old domain offering a Google sign-in is the shape of a credential-phishing kit,
+# so sign-in is switched off while the review runs, to make the site unambiguously a static
+# trainer. Nothing was deleted: /api/me reports configured:false, the UI hides sign-in rather
+# than showing a broken button, and restoring the value below turns it all back on.
+#
+# The real id, to paste back: 662165287048-lnmqb259j3rfecj983pfesmdb8i5fnqe.apps.googleusercontent.com
+GOOGLE_CLIENT_ID = ""

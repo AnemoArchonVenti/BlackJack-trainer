@@ -14,7 +14,7 @@
   // sets its own heading, so the page starts with the words that route wants to lead with.
   import { ROUTES, parseRoute, hrefFor, legacyHashPath } from './router.js';
   import { ruleLineFor, METHOD_LINE } from '../lib/house.js';
-  import { REFERENCE_PAGES, SITE } from '../site.js';
+  import { REFERENCE_PAGES, SITE, ACCOUNTS_ENABLED } from '../site.js';
   import { session, ui, toggleSettings, closeSettings, adoptProfile } from '../lib/session.svelte.js';
   import { account, initAccount, resolveConflict } from '../lib/account.svelte.js';
   import Dashboard from './Dashboard.svelte';
@@ -178,9 +178,14 @@
   <p class="fine">
     <span class="tag">Note</span>
     <span class="body">
-      Free practice software. No wagering and no real money. An account is optional and only syncs
-      your progress — <a href="/privacy">what is stored</a>. Card counting is legal; casinos are
-      private property and may still bar you.
+      {#if ACCOUNTS_ENABLED}
+        Free practice software. No wagering and no real money. An account is optional and only syncs
+        your progress — <a href="/privacy">what is stored</a>.
+      {:else}
+        Free practice software. No wagering, no real money, no accounts — your progress stays in this
+        browser (<a href="/privacy">what is stored</a>).
+      {/if}
+      Card counting is legal; casinos are private property and may still bar you.
     </span>
   </p>
 </footer>
