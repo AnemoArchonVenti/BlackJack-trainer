@@ -27,6 +27,37 @@ const publicUser = (user) => ({ id: user.id, email: user.email });
 /** A profile blob has to be JSON and has to be sane in size — 256 KB is orders above a real one. */
 const MAX_BLOB_BYTES = 256 * 1024;
 
+/**
+ * Security headers for everything this Worker answers.
+ *
+ * dist/_headers does NOT cover these routes. That file is read by the static asset store, so it
+ * hardens every page and stylesheet and reaches none of /api/*, which meant the sign-in endpoints
+ * — the only ones handling credentials — were the only ones shipping bare.
+ *
+ * The policy is stricter than the pages': this API returns JSON, plain text and redirects, never
+ * a document that needs to load anything, so `default-src 'none'` is simply the truth.
+ */
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  // An auth endpoint in a frame is a clickjacking primitive; it has no legitimate use in one.
+  'X-Frame-Options': 'DENY',
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+};
+
+/**
+ * harden(response) -> the same response with the headers above.
+ *
+ * `new Response(body, response)` rather than rebuilding from a Headers copy: the sign-in route
+ * sets TWO Set-Cookie headers, and reconstructing headers by hand is the classic way to silently
+ * collapse them into one and break the login it was meant to protect.
+ */
+function harden(response) {
+  const hardened = new Response(response.body, response);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) hardened.headers.set(name, value);
+  return hardened;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -36,11 +67,11 @@ export default {
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     try {
-      return await route(request, env, ctx, url);
+      return harden(await route(request, env, ctx, url));
     } catch (err) {
       // Never leak a stack trace to the client; it is the server's problem, not theirs.
       console.error('api error', url.pathname, err?.stack || err);
-      return json({ error: 'Something went wrong on our side.' }, 500);
+      return harden(json({ error: 'Something went wrong on our side.' }, 500));
     }
   },
 };
